@@ -5,89 +5,75 @@
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
     <link rel="icon" href="favicon.png" type="images/png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <style>
       body {
         text-align: center;
         background-color: #ECECEC;
-        background-position: top center;
-        background-repeat:repeat-y;
-        font: rb, Arial, sans-serif;
+        font: Helvetica, Arial, sans-serif;
         line-height: 1.4em;
-        background-image:url(bg.jpg);
-        background-repeat: repeat;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         -o-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-        height:100%;  
-        margin:0px;
-        position:absolute;
-        width:100%;
-
-      }
-      #page{
-        width:600px;
-        height:100%;
+        margin:5%;
+        margin-top:200px;
+        width:800px;
         margin-left:auto;
         margin-right:auto;
-        position:relative;
       }
+
       #header{
-        position: relative;
-        top: 20%;
+        top:10%;
         background: url(logo.png);
-          background-size: 100% Auto;
+        background-size: 100% Auto;
         width: 457px;
         height: 210px;
         margin-left: auto;
         margin-right:auto;
+        margin-bottom: 50px;
       }      
       #content{
-        width:600px;
-        height:266px;
-        top:20%;
-        overflow:hidden;
-        position: relative;
-        margin-left: auto;
-        margin-right:auto;
         margin-top:30px;          
-      }
-      #content li {
-        display:inline;
-        padding-left:50px;
-        padding-right:50px;
-        padding:0px;
-        padding-left:15px;
-        padding-right:15px;
-        color:#6b6b6b;
       }
       ul {
         padding:0px;
-        margin:0px;
+      }
+      li {
+        display:inline;
+        padding-left:15px;
+        padding-right:15px; 
+      }
+      a, a:visited {
+        color:#6b6b6b;
+      }
+      a:hover {
+        color: #404040;
       }
     </style>
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script>
       $(function(){
+        $('body').fadeOut(1)
+        $('body').fadeIn(3000)
         var mobile = 0
         var links = {
-          "envelope": ["mailto:rEuf6mEf1Nou@robertbastian.de","mailto:rEuf6mEf1Nou@robertbastian.de"],
+          "envelope": ["mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>","mailto:<rEuf6mEf1Nou@robertbastian.de>"],
           "facebook": ["http://facebook.com/robertbastian1","fb://profile/1305968572"],
           "github": ["https://github.com/robertbastian","https://github.com/robertbastian"],
           "linkedin": ["http://www.linkedin.com/in/robertbastian2","http://www.linkedin.com/in/robertbastian2"],
-          "skype": ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"],
-          "twitter": ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
+          "skype": ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"]
+          //"twitter": ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
         }
         var list = $('<ul></ul>')
         $('#content').append(list)
         for (var link in links){
           list.append(
             $('<li></li>').append(
-              $('<a href='+links[link][mobile]+'/>').append(
-                $("<span class='fa-stack fa-lg fa-2x'><i class='fa fa-inverse fa-square fa-stack-2x'/><i class='fa fa-stack-1x fa-"+link+"'/></span>")
+              $("<a href='"+links[link][mobile]+"' target='_blank'/>").append(
+                $("<span class='fa-stack fa-lg fa-3x'><i class='fa fa-inverse fa-square fa-stack-2x'/><i class='fa fa-stack-1x fa-"+link+"'/></span>")
               )
             )
           )
@@ -96,9 +82,8 @@
     </script>
   </head>
   <body>
-    <div id="page">
-      <div id="header"></div>
-      <div id="content"></div>
-    </div>
+    <div id="header"></div>
+    <hr/>
+    <div id="content"></div>
   </body>
 </html>
