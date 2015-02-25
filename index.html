@@ -5,6 +5,7 @@
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
     <link rel="icon" href="favicon.png" type="images/png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
+    <meta name="viewport" content="width=457px, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <style>
       body {
@@ -50,14 +51,13 @@
         $('body').fadeOut(1)
         $('body').fadeIn(3000)
         var mobile = !!('ontouchstart' in window) ? 1 : 0
-        console.log(mobile)
         var links = {
           "envelope": ["mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>","mailto:<rEuf6mEf1Nou@robertbastian.de>"],
           "facebook": ["http://facebook.com/robertbastian1","fb://profile/1305968572"],
           "github": ["https://github.com/robertbastian","https://github.com/robertbastian"],
           "linkedin": ["http://www.linkedin.com/in/robertbastian2","http://www.linkedin.com/in/robertbastian2"],
-          "skype": ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"]
-          //"twitter": ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
+          "skype": ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"],
+          "twitter": ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
         }
         var list = $('<ul></ul>')
         $('#content').append(list)
