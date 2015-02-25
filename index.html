@@ -50,21 +50,40 @@
         $('body').fadeOut(1)
         $('body').fadeIn(3000)
         var mobile = !!('ontouchstart' in window) ? 1 : 0
-        var links = {
-          "envelope": ["mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>","mailto:<rEuf6mEf1Nou@robertbastian.de>"],
-          "facebook": ["http://facebook.com/robertbastian1","fb://profile/1305968572"],
-          "github": ["https://github.com/robertbastian","https://github.com/robertbastian"],
-          "linkedin": ["http://www.linkedin.com/in/robertbastian2","http://www.linkedin.com/in/robertbastian2"],
-          "skype": ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"],
-          "twitter": ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
-        }
+        var links = [{
+            tooltip: "Email",
+            icon: "fa-envelope",
+            link: ["mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>","mailto:<rEuf6mEf1Nou@robertbastian.de>"]
+          },{
+            tooltip: "Facebook",
+            icon: "fa-facebook",
+            link: ["http://facebook.com/robertbastian1","fb://profile/1305968572"]
+          },{
+            tooltip: "GitHub",
+            icon: "fa-github",
+            link: ["https://github.com/robertbastian","https://github.com/robertbastian"]
+          },{
+            tooltip: "LinkedIn",
+            icon: "fa-linkedin",
+            link: ["http://www.linkedin.com/in/robertbastian2","http://www.linkedin.com/in/robertbastian2"]
+          },{
+            tooltip: "Skype",
+            icon: "fa-skype",
+            link: ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"]
+          },{
+            tooltip: "Twitter",
+            icon: "fa-twitter",
+            link: ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
+          }
+        ]
+
         var list = $('<ul></ul>')
         $('#content').append(list)
-        for (var link in links){
+        for (var i = 0; i < links.length; i++){
           list.append(
             $('<li></li>').append(
-              $("<a href='"+links[link][mobile]+"' target='_blank'/>").append(
-                $("<span class='fa-stack fa-lg fa-3x'><i class='fa fa-inverse fa-square fa-stack-2x'/><i class='fa fa-stack-1x fa-"+link+"'/></span>")
+              $("<a href='"+links[i].link[mobile]+"' target='_blank' title='"+links[i].tooltip+"'/>").append(
+                $("<span class='fa-stack fa-lg fa-3x'><i class='fa fa-inverse fa-square fa-stack-2x'/><i class='fa fa-stack-1x "+links[i].icon+"'/></span>")
               )
             )
           )
