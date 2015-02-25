@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html en>
+<html>
   <head>
-    <title>Robert Bastian</title>
+    <!-- Meta -->
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=500, initial-scale=1">
+
+    <!-- Icons -->
     <link rel="icon" href="favicon.png" type="images/png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <style>
       body {
@@ -13,8 +17,8 @@
         margin-left:auto;
         margin-right:auto;
         width:500px;
+        display:none;
       }
-
       #header{
         background: url(logo.png);
         background-size: 100% Auto;
@@ -42,56 +46,52 @@
         color: #404040;
       }
     </style>
+
+    <!-- Scripts -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script>
       $(function(){
-        $('body').fadeOut(1)
+        // Fancy fade in of the whole page
         $('body').fadeIn(3000)
-        var mobile = !!('ontouchstart' in window) ? 1 : 0
-        var links = [{
-            tooltip: "Email",
-            icon: "fa-envelope",
-            link: ["mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>","mailto:<rEuf6mEf1Nou@robertbastian.de>"]
-          },{
-            tooltip: "Facebook",
-            icon: "fa-facebook",
-            link: ["http://facebook.com/robertbastian1","fb://profile/1305968572"]
-          },{
-            tooltip: "GitHub",
-            icon: "fa-github",
-            link: ["https://github.com/robertbastian","https://github.com/robertbastian"]
-          },{
-            tooltip: "LinkedIn",
-            icon: "fa-linkedin",
-            link: ["http://www.linkedin.com/in/robertbastian2","http://www.linkedin.com/in/robertbastian2"]
-          },{
-            tooltip: "Skype",
-            icon: "fa-skype",
-            link: ["skype:robert_bastian?userinfo","skype:robert_bastian?chat"]
-          },{
-            tooltip: "Twitter",
-            icon: "fa-twitter",
-            link: ["http://twitter.com/robert_bastian","twitter://user?screen_name=robert_bastian"]
-          }
-        ]
 
-        var list = $('<ul></ul>')
-        $('#content').append(list)
-        for (var i = 0; i < links.length; i++){
-          list.append(
+        // Name, icon and link of all contact methods
+        var name = ['Email','Facebook','GitHub','LinkedIn','Skype','Twitter']
+        var icon = ['fa-envelope','fa-facebook','fa-github','fa-linkedin','fa-skype','fa-twitter']
+        var link = [
+          'mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>',
+          'http://facebook.com/robertbastian1',
+          'https://github.com/robertbastian',
+          'http://www.linkedin.com/in/robertbastian2',
+          'skype:robert_bastian?userinfo',
+          'http://twitter.com/robert_bastian'
+        ]
+        // If mobile, links to open in apps
+        if('ontouchstart' in window){
+          link[1] = 'fb://profile/1305968572'
+          link[4] = 'skype:robert_bastian?chat'
+          link[5] = 'twitter://user?screen_name=robert_bastian'
+        }
+        // Add all buttons
+        for (var i = 0; i < link.length; i++){
+          $('ul').append(
             $('<li></li>').append(
-              $("<a href='"+links[i].link[mobile]+"' target='_blank' title='"+links[i].tooltip+"'/>").append(
-                $("<span class='fa-stack fa-lg fa-3x'><i class='fa fa-inverse fa-square fa-stack-2x'/><i class='fa fa-stack-1x "+links[i].icon+"'/></span>")
+              $("<a target='_blank'/>").attr('href',link[i]).attr('title',name[i]).append(
+                $("<span class='fa-stack fa-lg fa-3x'></span").append(
+                  $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
+                  $("<i class='fa fa-stack-1x'/></span>").addClass(icon[i]))
+                ) 
               )
             )
           )
         }
       })
     </script>
+
+    <title>Robert Bastian</title>
   </head>
   <body>
     <div id="header"></div>
     <hr/>
-    <div id="content"></div>
+    <div id="content"><ul></ul></div>
   </body>
 </html>
