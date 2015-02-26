@@ -68,7 +68,7 @@
           'skype:robert_bastian?userinfo',
           'http://twitter.com/robert_bastian'
         ]
-        // If mobile, links to open in apps
+        // If mobile, links should open in apps
         if('ontouchstart' in window){
           link[1] = 'fb://profile/1305968572'
           link[4] = 'skype:robert_bastian?chat'
@@ -78,7 +78,7 @@
         for (var i = 0; i < link.length; i++){
           $('ul').append(
             $('<li></li>').append(
-              $("<a target='_blank'/>").attr('href',link[i]).attr('title',name[i]).append(
+              $("<a/>").attr('href',link[i]).attr('title',name[i]).append(
                 $("<span class='fa-stack fa-lg fa-3x'></span").append(
                   $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
                   $("<i class='fa fa-stack-1x'/></span>").addClass(icon[i]))
@@ -91,6 +91,7 @@
     </script>
 
     <title>Robert Bastian</title>
+    
   </head>
   <body>
     <div id="header"></div>
