@@ -58,21 +58,19 @@
         $('body').fadeIn(3000)
 
         // Name, icon and link of all contact methods
-        var name = ['Email','Facebook','GitHub','LinkedIn','Skype','Twitter']
-        var icon = ['fa-at','fa-facebook','fa-github','fa-linkedin','fa-skype','fa-twitter']
+        var name = ['Email','Facebook','GitHub','LinkedIn','Skype']
+        var icon = ['fa-at','fa-facebook','fa-github','fa-linkedin','fa-skype']
         var link = [
           'mailto:Robert Bastian <rEuf6mEf1Nou@robertbastian.de>',
           'http://facebook.com/robertbastian1',
           'https://github.com/robertbastian',
           'http://www.linkedin.com/in/robertbastian2',
-          'skype:robert_bastian?userinfo',
-          'http://twitter.com/robert_bastian'
+          'skype:robert_bastian?userinfo'
         ]
         // If mobile, links should open in apps
         if('ontouchstart' in window){
           link[1] = 'fb://profile/1305968572'
           link[4] = 'skype:robert_bastian?chat'
-          link[5] = 'twitter://user?screen_name=robert_bastian'
         }
         // Add all buttons
         for (var i = 0; i < link.length; i++){
