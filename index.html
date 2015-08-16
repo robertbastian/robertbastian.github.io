@@ -1,36 +1,33 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- Meta -->
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=500">
+    <title>Robert Bastian</title>
 
-    <!-- Icons -->
     <link rel="icon" href="favicon.png" type="images/png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
 
-    <!-- Styles -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <style>
+      html {
+        width: 100%;
+        height: 100%;
+      }
       body {
         background-color: #ECECEC;
-        margin-left:auto;
-        margin-right:auto;
-        width:500px;
-        display:none;
+        position: absolute;
+        width: 480px;
+        left: 50%;
+        margin-left:-240px;
+        height: 480px;
+        top: 50%;
+        margin-top:-240px;
+        text-align: center;
       }
-      #header{
-        background: url(logo.png);
-        background-size: 100% Auto;
-        width: 457px;
-        height: 210px;
-        margin: 30% auto 50px auto;
-      }  
-      hr {
-        width: 95%;
-      }    
-      #content{
-        text-align: center;         
+      img {
+        width: 420px;
+        margin: 0px auto;
       }
       ul {
         padding:0px;
@@ -58,10 +55,10 @@
         $('body').fadeIn(3000)
 
         // Name, icon and link of all contact methods
-        var name = ['Email','Facebook','GitHub','LinkedIn','PGP public key','Skype']
+        var name = ['Email','Facebook','GitHub','LinkedIn','PGP public key\n38BB B298 8DEF B1AE 95BF A811 10FA 7E31 6B71 938A','Skype']
         var icon = ['fa-at','fa-facebook','fa-github','fa-linkedin','fa-key','fa-skype']
         var link = [
-          'mailto:Robert Bastian <public@robertbastian.de>',
+          'mailto:Robert Bastian <hi@robertbastian.de>',
           'http://facebook.com/robertbastian1',
           'https://github.com/robertbastian',
           'http://www.linkedin.com/in/robertbastian2',
@@ -74,37 +71,32 @@
           link[5] = 'skype:robert_bastian?chat'
         }
         // Add all buttons
-        for (var i = 0; i < link.length; i++){
+        for (var i = 0; i < link.length; i++)
           $('ul').append(
-            $('<li></li>').append(
-              $("<a/>").attr('href',link[i]).attr('title',name[i]).append(
+            $('<li>').append(
+              $("<a>").attr('href',link[i]).attr('title',name[i]).append(
                 $("<span class='fa-stack fa-lg fa-3x'></span").append(
                   $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
                   $("<i class='fa fa-stack-1x'/></span>").addClass(icon[i]))
-                ) 
-              )
-            )
-          )
-        }
+          ))))
       })
-    </script>
-    
-    <!-- Google analytics -->
-    <script>
+
+      // Google analytics
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
       ga('create', 'UA-19759111-2', 'auto');
       ga('send', 'pageview');
-    </script>
 
-    <title>Robert Bastian</title>
-    
+    </script>
   </head>
   <body>
-    <div id="header"></div>
+    <img src='logo.png' draggable='false'/>
     <hr/>
-    <div id="content"><ul></ul></div>
+    <div>
+      <ul></ul>
+    </div>
   </body>
 </html>
