@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
     <style>
       html {
+        background-color: #ECECEC;
         width: 100%;
         height: 100%;
       }
       body {
-        background-color: #ECECEC;
         position: absolute;
         width: 480px;
         left: 50%;
@@ -24,7 +24,6 @@
         top: 50%;
         margin-top:-240px;
         text-align: center;
-        display: none;
       }
       img {
         width: 420px;
@@ -53,7 +52,8 @@
     <script>
       $(function(){
         // Fancy fade in of the whole page
-        $('body').fadeIn(3000)
+        $('body').css('display', 'none');
+        $('body').fadeIn(1500)
 
         // Name, icon and link of all contact methods
         var name = ['Email','Facebook','GitHub','LinkedIn','PGP public key\n38BB B298 8DEF B1AE 95BF A811 10FA 7E31 6B71 938A','Skype']
@@ -80,6 +80,13 @@
                   $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
                   $("<i class='fa fa-stack-1x'/></span>").addClass(icon[i]))
           ))))
+
+        $('a').click(function(e){
+          if (/^http/.test(e.currentTarget.href)){
+            $('body').fadeOut(300,function(){ window.location = e.currentTarget.href })
+            return false
+          }
+        })
       })
 
       // Google analytics
