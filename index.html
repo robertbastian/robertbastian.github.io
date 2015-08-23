@@ -54,41 +54,67 @@
         // Fancy fade in of the whole page
         $('body').css('display', 'none');
         $('body').fadeIn(1500)
+        var mobile = !!('ontouchstart' in window)
 
-        // Name, icon and link of all contact methods
-        var name = ['Email','Facebook','GitHub','LinkedIn','PGP public key\n38BB B298 8DEF B1AE 95BF A811 10FA 7E31 6B71 938A','Skype']
-        var icon = ['fa-at','fa-facebook','fa-github','fa-linkedin','fa-key','fa-skype']
-        var link = [
-          'mailto:Robert Bastian <hi@robertbastian.de>',
-          'http://facebook.com/robertbastian1',
-          'https://github.com/robertbastian',
-          'http://www.linkedin.com/in/robertbastian2',
-          'https://keybase.io/robertbastian/key.asc',
-          'skype:robert_bastian?userinfo'
-        ]
-        // If mobile, links should open in apps
-        if('ontouchstart' in window){
-          link[1] = 'fb://profile/1305968572'
-          link[5] = 'skype:robert_bastian'
-        }
-        // Add all buttons
-        for (var i = 0; i < link.length; i++)
-          $('ul').append(
-            $('<li>').append(
-              $("<a>").attr('href',link[i]).attr('title',name[i]).append(
-                $("<span class='fa-stack fa-lg fa-3x'></span").append(
-                  $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
-                  $("<i class='fa fa-stack-1x'/></span>").addClass(icon[i]))
-          ))))
-
-        $('a').click(function(e){
-          if (/^http/.test(e.currentTarget.href)){
-            $('body').fadeOut(300,function(){ window.location = e.currentTarget.href })
-            return false
+        // Name, icon, link and action of all buttons
+        var links = [
+          {
+            name: 'Email',
+            link: 'mailto:Robert Bastian <hi@robertbastian.de>',
+            icon: 'fa-at',
+            action: 'none'
+          },{
+            name: 'Facebook',
+            link: mobile ? 'fb://profile/1305968572' : 'http://facebook.com/robertbastian1',
+            icon: 'fa-facebook',
+            action: 'fade'
+          },{
+            name: 'GitHub',
+            link: 'https://github.com/robertbastian',
+            icon: 'fa-github',
+            action: 'fade'
+          },{
+            name: 'LinkedIn',
+            link: 'http://www.linkedin.com/in/robertbastian2',
+            icon: 'fa-linkedin',
+            action: 'fade'
+          },{
+            name: 'PGP public key\n38BB  B298  8DEF  B1AE  95BF\nA811  10FA  7E31  6B71  938A',
+            link: 'https://keybase.io/robertbastian/key.asc',
+            icon: 'fa-key',
+            action: 'download',
+            filename: 'RobertBastian.pub'
+          },{
+            name: 'Skype',
+            link: mobile ? 'skype:robert_bastian' : 'skype:robert_bastian?userinfo',
+            icon: 'fa-skype',
+            action: 'none'
           }
+        ]
+        
+        links.map(function(link){
+          var tag = $('<a>').attr('title',link.name).append(
+            $("<span class='fa-stack fa-lg fa-3x'></span").append(
+              $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
+                $("<i class='fa fa-stack-1x'/></span>").addClass(link.icon)
+              )
+            )
+          )
+          switch (link.action){
+            case 'fade':
+              tag.click(function(){
+                $('body').fadeOut(300,function(){ window.location = link.link })
+                return false
+              }); break
+            case 'download':
+              tag.attr('download',link.filename)
+            default:
+              tag.attr('href',link.link)
+          }
+          $('ul').append($('<li>').append(tag))
         })
       })
-
+      
       // Google analytics
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
