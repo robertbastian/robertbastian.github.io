@@ -51,9 +51,7 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script>
       $(function(){
-        // Fancy fade in of the whole page
-        $('body').css('display', 'none');
-        $('body').fadeIn(1500)
+        $('body').hide()
         var mobile = !!('ontouchstart' in window)
 
         // Name, icon, link and action of all buttons
@@ -113,6 +111,11 @@
           }
           $('ul').append($('<li>').append(tag))
         })
+      })
+      
+      $(window).load(function(){
+        // Fade in after image is loaded
+        $('body').fadeIn(1500)
       })
       
       // Google analytics
