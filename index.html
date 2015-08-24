@@ -44,7 +44,6 @@
       }
     </style>
 
-    <!-- Scripts -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script>
       $(function(){
@@ -113,6 +112,7 @@
       $(window).load(function(){
         // Fade in after image is loaded
         $('body').fadeIn(1500)
+        // Have to fade again if accessed via back button
         $(window).on('popstate', function(x) {
           $('body').fadeIn(1500)
         })
