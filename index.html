@@ -17,13 +17,10 @@
       }
       body {
         position: absolute;
-        width: 480px;
-        left: 50%;
-        margin-left:-240px;
-        height: 480px;
-        top: 50%;
-        margin-top:-240px;
+        width: 480px; left: 50%; margin-left:-240px;
+        height: 480px; top: 50%; margin-top:-240px;
         text-align: center;
+        font-family: sans-serif;
       }
       img {
         width: 420px;
@@ -58,7 +55,7 @@
         var links = [
           {
             name: 'Email',
-            link: 'mailto:Robert Bastian <hi@robertbastian.de>',
+            link: 'mailto:Robert Bastian <'+'hi@r'+'ober'+'tbast'+'ian.d'+'e>',
             icon: 'fa-at',
             action: 'none'
           },{
@@ -91,7 +88,7 @@
         ]
         
         links.map(function(link){
-          var tag = $('<a>').attr('title',link.name).append(
+          var tag = $('<a href="#">').attr('title',link.name).append(
             $("<span class='fa-stack fa-lg fa-3x'></span").append(
               $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
                 $("<i class='fa fa-stack-1x'/></span>").addClass(link.icon)
@@ -105,19 +102,22 @@
                 return false
               }); break
             case 'download':
-              tag.attr('download',link.filename)
+              tag.attr('download',link.filename).attr('href',link.link); break;
             default:
-              tag.attr('href',link.link)
+              tag.click(function(){ window.location = link.link; return false; })
           }
           $('ul').append($('<li>').append(tag))
         })
       })
-      
+
       $(window).load(function(){
         // Fade in after image is loaded
         $('body').fadeIn(1500)
+        $(window).on('popstate', function(x) {
+          $('body').fadeIn(1500)
+        })
       })
-      
+
       // Google analytics
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -132,6 +132,7 @@
   <body>
     <img src='logo.png' alt='Robert Bastian' draggable='false'/>
     <hr/>
+    <noscript>No JavaScript – No fun!</noscript>
     <div>
       <ul></ul>
     </div>
