@@ -63,11 +63,11 @@
           return false
         }
         function mailCaptcha(){
-          $("<div>").addClass('modal').css('display','none').css('width','500px').css('height','325px').css('background-color','#FFF8DF')
+          $('<div>').addClass('modal').css('display','none').css('width','500px').css('height','325px').css('background-color','#FFF8DF')
             .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none').attr('width','500').attr('height','250'))
-            .append($('hr').css('margin','5px'))
-            .append($("<div>").css('text-align','center')
-              .append($("<a>").attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub')
+            .append($('<hr>').css('margin','5px'))
+            .append($('<div>').css('text-align','center')
+              .append($('<a>'').attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub')
                   .css('text-decoration','none').attr('target','_blank')
                 .append($('<i>').addClass('fa fa-key fa-2x').css('vertical-align','middle'))
                 .append('<br/>PGP Public Key')
