@@ -64,7 +64,7 @@
         }
         function mailCaptcha(){
           $("<div>").addClass('modal').css('display','none').css('width','500px').css('height','350px').css('background-color','#FFF8DF')
-            .append($('<iframe>').attr('src','http://email.robertbastian.de').css('border','none').attr('width','500').attr('height','300'))
+            .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none').attr('width','500').attr('height','300'))
             .append($("<div>").css('text-align','center')
               .append($("<a>").attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub').css('text-decoration','none')
                 .append($('<i>').addClass('fa fa-key fa-2x').css('vertical-align','middle'))
@@ -74,7 +74,7 @@
         }
 
         var buttonData = [
-          {name: 'Email',    icon: 'fa-at',       link: 'http://email.robertbastian.de', action: desktop ? mailCaptcha : null},
+          {name: 'Email',    icon: 'fa-at',       link: 'https://email.robertbastian.de', action: desktop ? mailCaptcha : null},
           {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572', action: desktop ? fadeAndLoad : null},
           {name: 'Skype',    icon: 'fa-skype',    link: desktop ? 'skype:robert_bastian?userinfo' : 'skype:robert_bastian'},
           {name: 'GitHub',   icon: 'fa-github',   link: 'https://github.com/robertbastian', action: fadeAndLoad},
