@@ -63,12 +63,14 @@
           return false
         }
         function mailCaptcha(){
-          $("<div>").addClass('modal').css('display','none').css('width','500px').css('height','350px').css('background-color','#FFF8DF')
-            .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none').attr('width','500').attr('height','300'))
+          $("<div>").addClass('modal').css('display','none').css('width','500px').css('height','325px').css('background-color','#FFF8DF')
+            .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none').attr('width','500').attr('height','250'))
+            .append($('hr').css('margin','5px'))
             .append($("<div>").css('text-align','center')
-              .append($("<a>").attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub').css('text-decoration','none')
+              .append($("<a>").attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub')
+                  .css('text-decoration','none').attr('target','_blank')
                 .append($('<i>').addClass('fa fa-key fa-2x').css('vertical-align','middle'))
-                .append('38BB  B298  8DEF  B1AE  95BF A811  10FA  7E31  6B71  938A')
+                .append('<br/>38BB  B298  8DEF  B1AE  95BF A811  10FA  7E31  6B71  938A')
             )).modal()
           return false
         }
