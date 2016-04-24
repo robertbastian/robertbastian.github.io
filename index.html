@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="http://jquerymodal.com/jquery.modal.css" type="text/css" media="screen" />
     <style>
       html {
         background-color: #ECECEC;
@@ -42,97 +43,60 @@
       a:hover {
         color: #404040;
       }
+      .modal {
+        padding: 0;
+      }
+      .close-modal {
+        top: 12.5px !important;
+        right: 12.5px !important;
+      }
     </style>
 
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://jquerymodal.com/jquery.modal.js" type="text/javascript" charset="utf-8"></script>
     <script>
       $(function(){
-        $('body').hide()
-        var mobile = !!('ontouchstart' in window)
 
-        // Name, icon, link and action of all buttons
-        var links = [
-          {
-            name: 'Email',
-            link: 'mailto:Robert Bastian <'+'hi@r'+'ober'+'tbast'+'ian.d'+'e>',
-            icon: 'fa-at',
-            action: 'none'
-          },{
-            name: 'Facebook',
-            link: mobile ? 'fb://profile/1305968572' : 'http://facebook.com/robertbastian1',
-            icon: 'fa-facebook',
-            action: 'fade'
-          },{
-            name: 'GitHub',
-            link: 'https://github.com/robertbastian',
-            icon: 'fa-github',
-            action: 'fade'
-          },{
-            name: 'LinkedIn',
-            link: 'http://www.linkedin.com/in/robertbastian2',
-            icon: 'fa-linkedin',
-            action: 'fade'
-          },{
-            name: 'PGP public key\n38BB  B298  8DEF  B1AE  95BF\nA811  10FA  7E31  6B71  938A',
-            link: 'https://keybase.io/robertbastian/key.asc',
-            icon: 'fa-key',
-            action: 'download',
-            filename: 'RobertBastian.pub'
-          },{
-            name: 'Skype',
-            link: mobile ? 'skype:robert_bastian' : 'skype:robert_bastian?userinfo',
-            icon: 'fa-skype',
-            action: 'none'
-          }
+        var desktop = !('ontouchstart' in window)
+        function fadeAndLoad(e){
+          $('body').fadeOut(300,function(){ window.location = $(e.target).closest('a').attr('href') })
+          return false
+        }
+        function mailCaptcha(){
+          $("<div>").addClass('modal').css('display','none').css('width','500px').css('height','350px').css('background-color','#FFF8DF')
+            .append($('<iframe>').attr('src','http://email.robertbastian.de').css('border','none').attr('width','500').attr('height','300'))
+            .append($("<div>").css('text-align','center')
+              .append($("<a>").attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub').css('text-decoration','none')
+                .append($('<i>').addClass('fa fa-key fa-2x').css('vertical-align','middle'))
+                .append('38BB  B298  8DEF  B1AE  95BF A811  10FA  7E31  6B71  938A')
+            )).modal()
+          return false
+        }
+
+        var buttonData = [
+          {name: 'Email',    icon: 'fa-at',       link: 'http://email.robertbastian.de', action: desktop ? mailCaptcha : null},
+          {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572', action: desktop ? fadeAndLoad : null},
+          {name: 'Skype',    icon: 'fa-skype',    link: desktop ? 'skype:robert_bastian?userinfo' : 'skype:robert_bastian'},
+          {name: 'GitHub',   icon: 'fa-github',   link: 'https://github.com/robertbastian', action: fadeAndLoad},
+          {name: 'LinkedIn', icon: 'fa-linkedin', link: 'http://www.linkedin.com/in/robertbastian2', action: fadeAndLoad}
         ]
-        
-        links.map(function(link){
-          var tag = $('<a href="#">').attr('title',link.name).append(
-            $("<span class='fa-stack fa-lg fa-3x'></span").append(
-              $("<i class='fa fa-inverse fa-square fa-stack-2x'/>").add(
-                $("<i class='fa fa-stack-1x'/></span>").addClass(link.icon)
-              )
-            )
-          )
-          switch (link.action){
-            case 'fade':
-              tag.click(function(){
-                $('body').fadeOut(300,function(){ window.location = link.link })
-                return false
-              }); break
-            case 'download':
-              tag.attr('download',link.filename).attr('href',link.link); break;
-            default:
-              tag.click(function(){ window.location = link.link; return false; })
-          }
-          $('ul').append($('<li>').append(tag))
-        })
+
+        $('ul').append(buttonData.map(function(link){ return $('<li>').append(
+          $('<a>').attr('href',link.link).attr('title',link.name).click(link.action).append(
+            $('<span>').addClass('fa-stack fa-lg fa-3x').append([
+              $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x'),
+              $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
+        }))
       })
 
-      $(window).load(function(){
-        // Fade in after image is loaded
+      $(window).on('load popstate', function(){
         $('body').fadeIn(1500)
-        // Have to fade again if accessed via back button
-        $(window).on('popstate', function(x) {
-          $('body').fadeIn(1500)
-        })
       })
-
-      // Google analytics
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-      ga('create', 'UA-19759111-2', 'auto');
-      ga('send', 'pageview');
-
     </script>
   </head>
-  <body>
+  <body style='display: none'>
     <img src='logo.png' alt='Robert Bastian' draggable='false'/>
     <hr/>
-    <noscript>No JavaScript – No fun!</noscript>
     <div>
       <ul></ul>
     </div>
