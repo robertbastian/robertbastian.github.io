@@ -63,22 +63,24 @@
           return false
         }
         function mailCaptcha(){
-          $('<div>').addClass('modal').css('display','none').css('width','500px').css('height','325px').css('background-color','#FFF8DF')
-            .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none').attr('width','500').attr('height','250'))
+          $('<div>').addClass('modal').css('display','none').css('width','500px').css('height','325px').css('background-color','#FFF9E6')
+            .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none')
+              .css('width','500px').css('height','250px').css('overflow','hidden').attr('scrolling','no'))
             .append($('<hr>').css('margin','5px'))
             .append($('<div>').css('text-align','center')
               .append($('<a>').attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub')
                   .css('text-decoration','none').attr('target','_blank')
                 .append($('<i>').addClass('fa fa-key fa-2x').css('vertical-align','middle'))
-                .append('<br/>PGP Public Key')
+                .append('<br/>PGP Public Key ▹')
             )).modal()
           return false
         }
 
         var buttonData = [
           {name: 'Email',    icon: 'fa-at',       link: 'https://email.robertbastian.de', action: desktop ? mailCaptcha : null},
-          {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572', action: desktop ? fadeAndLoad : null},
+          {name: 'Telephone',icon: 'fa-phone',    link: 'tel:+447453603071'},
           {name: 'Skype',    icon: 'fa-skype',    link: desktop ? 'skype:robert_bastian?userinfo' : 'skype:robert_bastian'},
+          {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572', action: desktop ? fadeAndLoad : null},
           {name: 'GitHub',   icon: 'fa-github',   link: 'https://github.com/robertbastian', action: fadeAndLoad},
           {name: 'LinkedIn', icon: 'fa-linkedin', link: 'http://www.linkedin.com/in/robertbastian2', action: fadeAndLoad}
         ]
