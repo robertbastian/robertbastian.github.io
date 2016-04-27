@@ -1,108 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=500">
-    <title>Robert Bastian</title>
+<html>
+<head>
+  <title>Robert Bastian</title>
 
-    <link rel="icon" href="favicon.png" type="images/png">
-    <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
+  <meta name="viewport" content="width=520">
+  <link rel="icon" href="graphics/favicon.png" type="images/png">
+  <link rel="apple-touch-icon-precomposed" href="graphicsapple-touch-icon-precomposed.png">
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="jquery.modal.css" type="text/css" media="screen" />
-    <style>
-      html {
-        background-color: #ECECEC;
-        width: 100%;
-        height: 100%;
-      }
-      body {
-        position: absolute;
-        width: 480px; left: 50%; margin-left:-240px;
-        height: 480px; top: 50%; margin-top:-240px;
-        text-align: center;
-        font-family: sans-serif;
-      }
-      img {
-        width: 420px;
-        margin: 0px auto;
-      }
-      ul {
-        padding:0px;
-      }
-      li {
-        display:inline-block;
-        padding:20px 30px 0px 30px;
-      }
-      .fa-stack-2x {
-        text-shadow: 0px 0px 15px #ccc;
-      }
-      a, a:visited {
-        color:#6b6b6b;
-      }
-      a:hover {
-        color: #404040;
-      }
-      .modal {
-        padding: 0;
-      }
-      .close-modal {
-        top: 12.5px !important;
-        right: 12.5px !important;
-      }
-    </style>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.1/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.css">
+  <style>
+    body {
+      background-color: #ECECEC;
+      width: 100%;
+      height: 100%;
+    }
+    .content {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 480px; margin-left:-240px;
+      height: 480px; margin-top:-240px;
+      display: none;
+    }
+    img {
+      width: 420px;
+      margin: 0px 30px;
+    }
+    ul {
+      padding:0px;
+      text-align: center;
+    }
+    li {
+      padding:20px 30px 0px 30px;
+      display:inline-block;
+    }
+    a, a:visited {
+      color:#6b6b6b;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #404040;
+    }
+    .shadow {
+      text-shadow: 0px 0px 15px #ccc;
+    }
+  </style>
 
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="jquery.modal.min.js" type="text/javascript" charset="utf-8"></script>
-    <script>
-      $(function(){
-
-        var desktop = !('ontouchstart' in window)
-        function fadeAndLoad(e){
-          $('body').fadeOut(300,function(){ window.location = $(e.target).closest('a').attr('href') })
-          return false
-        }
-        function mailCaptcha(){
-          $('<div>').addClass('modal').css('display','none').css('width','500px').css('height','325px').css('background-color','#FFF9E6')
-            .append($('<iframe>').attr('src','https://email.robertbastian.de').css('border','none')
-              .css('width','500px').css('height','250px').css('overflow','hidden').attr('scrolling','no'))
-            .append($('<hr>').css('margin','5px'))
-            .append($('<div>').css('text-align','center')
-              .append($('<a>').attr('href','https://keybase.io/robertbastian/key.asc').attr('download','Robert_Bastian.pub')
-                  .css('text-decoration','none').attr('target','_blank')
-                .append($('<i>').addClass('fa fa-key fa-2x').css('vertical-align','middle'))
-                .append('<br/>PGP Public Key ▹')
-            )).modal()
-          return false
-        }
-
-        var buttonData = [
-          {name: 'Email',    icon: 'fa-at',       link: 'https://email.robertbastian.de', action: desktop ? mailCaptcha : null},
-          {name: 'Telephone',icon: 'fa-phone',    link: 'tel:+447453603071'},
-          {name: 'Skype',    icon: 'fa-skype',    link: desktop ? 'skype:robert_bastian?userinfo' : 'skype:robert_bastian'},
-          {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572', action: desktop ? fadeAndLoad : null},
-          {name: 'GitHub',   icon: 'fa-github',   link: 'https://github.com/robertbastian', action: fadeAndLoad},
-          {name: 'LinkedIn', icon: 'fa-linkedin', link: 'http://www.linkedin.com/in/robertbastian2', action: fadeAndLoad}
-        ]
-
-        $('ul').append(buttonData.map(function(link){ return $('<li>').append(
-          $('<a>').attr('href',link.link).attr('title',link.name).click(link.action).append(
-            $('<span>').addClass('fa-stack fa-lg fa-3x').append([
-              $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x'),
-              $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
-        }))
-      })
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.js"></script>
+  <script src='https://www.google.com/recaptcha/api.js?render=explicit'></script>
+  <script>
+    $(function(){
 
       $(window).on('load popstate', function(){
-        $('body').fadeIn(1500)
+        $('.content').fadeIn(1000)
       })
-    </script>
-  </head>
-  <body style='display: none'>
-    <img src='logo.png' alt='Robert Bastian' draggable='false'/>
+
+      var buttonData = [
+        {name: 'Email',    icon: 'fa-at',       link: '#', callback: captcha},
+        {name: 'Phone',    icon: 'fa-phone',    link: '#', callback: captcha},
+        {name: 'Skype',    icon: 'fa-skype',    link: '#', callback: captcha},
+        {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572',                callback: fadeAndLoad},
+        {name: 'GitHub',   icon: 'fa-github',   link: 'https://github.com/robertbastian',       callback: fadeAndLoad},
+        {name: 'LinkedIn', icon: 'fa-linkedin', link: 'https://linkedin.com/in/robertbastian2', callback: fadeAndLoad}
+      ]
+
+      $('ul').append(buttonData.map(function(link){ return $('<li>').append(
+        $('<a>').attr('href',link.link).attr('title',link.name).click(link.callback).append(
+          $('<span>').addClass('fa-stack fa-lg fa-3x').append([
+            $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x shadow'),
+            $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
+      }))
+
+      function fadeAndLoad(e){
+        $('.content').fadeOut(300,function(){
+          window.location = $(e.target).closest('a').attr('href')
+        })
+        return false
+      }
+
+      function captcha(e){
+        if ($(e.target).closest('a').attr('href') != '#')
+          return true
+        var captcha = $('<div>').css('padding','0px').css('width','302px').css('height','76px')
+        grecaptcha.render(
+          captcha[0],{
+          sitekey:'6LdJUx4TAAAAAJ-hnAVuDq9FYnGY7uMk2oxl7IWM',
+          callback: function(response){
+            $.getJSON(
+              'https://webtask.it.auth0.com/api/run/wt-robert-bastian_com-0/captcha_check',
+              {response: response})
+            .done(function(reply){
+              $('a[title=Email]').attr('href',reply.email)
+              $('a[title=Phone]').attr('href',reply.phone)
+              $('a[title=Skype]').attr('href',reply.skype + (('ontouchstart' in window) ? '?call' : '?userinfo'))
+              $(e.target).closest('a')[0].click()
+            })
+            .always(function(){
+              $.modal.close().remove()
+            })
+          }}
+        )
+        captcha.modal()
+        return false
+      }
+    })
+  </script>
+</head>
+<body>
+  <div class='content'>
+    <img src='graphics/logo.png' alt='Robert Bastian' draggable='false'/>
     <hr/>
-    <div>
-      <ul></ul>
-    </div>
-  </body>
+    <ul></ul>
+  </div>
+</body>
 </html>
