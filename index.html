@@ -12,31 +12,27 @@
   <style>
     body {
       background-color: #ECECEC;
-      width: 100%;
-      height: 100%;
-    }
-    .content {
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 480px; margin-left:-240px;
-      height: 480px; margin-top:-240px;
+      text-align: center;
       display: none;
     }
     img {
-      width: 420px;
-      margin: 0px 30px;
+      padding-top: 250px;
+      width: 400px;
+      filter: drop-shadow(0px 0px 40px #ccc);
+    }
+    hr {
+      width: 480px;
+      margin: 30px auto;
     }
     ul {
-      padding:0px;
-      text-align: center;
+      padding: 0;
     }
     li {
-      padding:20px 30px 0px 30px;
-      display:inline-block;
+      padding: 0 30px;
+      display: inline-block;
     }
     a, a:visited {
       color:#6b6b6b;
-      text-decoration: none;
     }
     a:hover {
       color: #404040;
@@ -53,7 +49,7 @@
     $(function(){
 
       $(window).on('load popstate', function(){
-        $('.content').fadeIn(1000)
+        $('body').fadeIn(1000)
       })
 
       var buttonData = [
@@ -65,15 +61,18 @@
         {name: 'LinkedIn', icon: 'fa-linkedin', link: 'https://linkedin.com/in/robertbastian2', callback: fadeAndLoad}
       ]
 
-      $('ul').append(buttonData.map(function(link){ return $('<li>').append(
-        $('<a>').attr('href',link.link).attr('title',link.name).click(link.callback).append(
-          $('<span>').addClass('fa-stack fa-lg fa-3x').append([
-            $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x shadow'),
-            $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
-      }))
+
+      for (var i = 0; i < buttonData.length; i += 3)
+        $('<ul>').append(buttonData.slice(i,i+3).map(function makeLi(link){ return $('<li>').append(
+          $('<a>').attr('href',link.link).attr('title',link.name).click(link.callback).append(
+            $('<span>').addClass('fa-stack fa-lg fa-3x').append([
+              $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x shadow'),
+              $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
+        })).appendTo('body')
+
 
       function fadeAndLoad(e){
-        $('.content').fadeOut(300,function(){
+        $('body').fadeOut(300,function(){
           window.location = $(e.target).closest('a').attr('href')
         })
         return false
@@ -108,10 +107,7 @@
   </script>
 </head>
 <body>
-  <div class='content'>
-    <img src='graphics/logo.png' alt='Robert Bastian' draggable='false'/>
-    <hr/>
-    <ul></ul>
-  </div>
+  <img src='graphics/logo.png'/>
+  <hr/>
 </body>
 </html>
