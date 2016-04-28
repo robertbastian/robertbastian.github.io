@@ -3,17 +3,26 @@
 <head>
   <title>Robert Bastian</title>
 
-  <meta name="viewport" content="width=520">
-  <link rel="icon" href="graphics/favicon.png" type="images/png">
-  <link rel="apple-touch-icon-precomposed" href="graphics/apple-touch-icon-precomposed.png">
+  <meta name='viewport' content='width=device-width'>
+  <link rel='shortcut icon' href='graphics/favicon.png' type='image/png'>
+  <link rel='apple-touch-icon-precomposed' href='graphics/apple-touch-icon-precomposed.png'>
 
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.1/css/font-awesome.min.css">
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+  <script src="http://ajax.googleapis.com/ajax/libs/webfont/1.5.0/webfont.js"></script>
+  <script> WebFont.load({custom:{families: ['FontAwesome'],testStrings:{'FontAwesome':'\uf00c\uf000'}}}) </script>
+
   <style>
     body {
       background-color: #ECECEC;
       text-align: center;
-      display: none;
+      min-width: 500px;
+    }
+    .wf-loading body > * {
+      opacity: 0;
+    }
+    .wf-active body > * {
+      opacity: 1;
+      transition: opacity .8s ease-in-out;
     }
     img {
       padding-top: 250px;
@@ -29,7 +38,7 @@
       padding: 0;
     }
     li {
-      padding: 0 30px;
+      padding: 0 10px;
       display: inline-block;
     }
     a, a:visited {
@@ -41,43 +50,33 @@
     .shadow {
       text-shadow: 0px 0px 15px #ccc;
     }
+    /* Until FontAwesome adds the Messenger icon*/
+    .fa-comment {
+      transform: scale(.85, 1.1) translateY(-2px);
+    }
   </style>
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.js"></script>
-  <script src='https://www.google.com/recaptcha/api.js?render=explicit'></script>
+  <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
   <script>
     $(function(){
-
-      $(window).on('load popstate', function(){
-        $('body').fadeIn(1000)
-      })
-
       var buttonData = [
-        {name: 'Email',    icon: 'fa-at',       link: '#', callback: captcha},
-        {name: 'Phone',    icon: 'fa-phone',    link: '#', callback: captcha},
-        {name: 'Skype',    icon: 'fa-skype',    link: '#', callback: captcha},
-        {name: 'Messenger',icon: 'fa-facebook', link: 'https://m.me/1305968572',                callback: fadeAndLoad},
-        {name: 'GitHub',   icon: 'fa-github',   link: 'https://github.com/robertbastian',       callback: fadeAndLoad},
-        {name: 'LinkedIn', icon: 'fa-linkedin', link: 'https://linkedin.com/in/robertbastian2', callback: fadeAndLoad}
+        {name: 'Email',    icon: 'fa-at',        callback: captcha},
+        {name: 'Phone',    icon: 'fa-phone',     callback: captcha},
+        {name: 'Skype',    icon: 'fa-skype',     callback: captcha},
+        {name: 'Messenger',icon: 'fa-comment',   link: 'https://m.me/1305968572'},
+        {name: 'GitHub',   icon: 'fa-github',    link: 'https://github.com/robertbastian'},
+        {name: 'LinkedIn', icon: 'fa-linkedin',  link: 'https://linkedin.com/in/robertbastian2'},
+        {name: 'CV',       icon: 'fa-file-text', link: 'https://drive.google.com/file/d/' +
+            (window.navigator.language == 'de' ? '0B0beurlDseSHRmFjZ0Nva0FMMjg' : '0B0beurlDseSHQzhYUzRpVno4VlU') + '/preview'}
       ]
 
-
-      for (var i = 0; i < buttonData.length; i += 3)
-        $('<ul>').append(buttonData.slice(i,i+3).map(function makeLi(link){ return $('<li>').append(
-          $('<a>').attr('href',link.link).attr('title',link.name).click(link.callback).append(
+      for (var i = 0; i < buttonData.length; i += 4)
+        $('<ul>').append(buttonData.slice(i,i+4).map(function makeLi(link){ return $('<li>').append(
+          $('<a>').attr('href',link.link || '#').attr('title',link.name).click(link.callback).append(
             $('<span>').addClass('fa-stack fa-lg fa-3x').append([
               $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x shadow'),
               $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
         })).appendTo('body')
-
-
-      function fadeAndLoad(e){
-        $('body').fadeOut(300,function(){
-          window.location = $(e.target).closest('a').attr('href')
-        })
-        return false
-      }
 
       function captcha(e){
         if ($(e.target).closest('a').attr('href') != '#')
@@ -104,6 +103,12 @@
         captcha.modal()
         return false
       }
+    })
+
+    $(window).load(function(){
+      $('<link>').attr('href','https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.css').attr('rel','stylesheet').appendTo('head')
+      $('<script>').attr('src','https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.js').appendTo('head')
+      $('<script>').attr('src','https://www.google.com/recaptcha/api.js?render=explicit').appendTo('head')
     })
   </script>
 </head>
