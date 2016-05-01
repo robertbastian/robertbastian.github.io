@@ -61,7 +61,7 @@
         $('meta[name=viewport]').attr('content',$(window).width() < 500 ? 'width=516px, user-scalable=no' : 'initial-scale=1, user-scalable=no')
       })
 
-      $(window).on('load popstate pushstate',function(){
+      $(window).on('pageshow',function(){
         $('html').addClass('loaded')
       })
 
