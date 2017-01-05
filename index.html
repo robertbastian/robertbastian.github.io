@@ -3,7 +3,7 @@
 <head>
   <title>Robert Bastian</title>
 
-  <meta name='viewport' content='initial-scale=1, user-scalable=no'>
+  <meta name='viewport' content='width=516px, user-scalable=no'>
   <link rel='shortcut icon' href='graphics/favicon.png' type='image/png'>
   <link rel='apple-touch-icon-precomposed' href='graphics/apple-touch-icon-precomposed.png'>
 
@@ -36,7 +36,7 @@
       padding: 0;
     }
     li {
-      padding: 0 10px;
+      padding: 0 20px;
       display: inline-block;
     }
     a, a:visited {
@@ -50,75 +50,64 @@
     }
     /* Until FontAwesome adds the Messenger icon*/
     .fa-comment {
-      transform: scale(.85, 1.1) translateY(-2px);
+      transform: scale(.9, 1.05) translateY(-2px);
     }
   </style>
 
   <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
   <script>
-    $(function(){
-      $(window).on('load resize',function(){
-        $('meta[name=viewport]').attr('content',$(window).width() < 500 ? 'width=516px, user-scalable=no' : 'initial-scale=1, user-scalable=no')
-      })
+    $(() => {
+      $(window).on('pageshow',() => $('html').addClass('loaded'))
 
-      $(window).on('pageshow',function(){
-        $('html').addClass('loaded')
-      })
-
-      $(window).on('load',function(){
+      $(window).on('load',() => {
         $.getScript('https://www.google.com/recaptcha/api.js?render=explicit')
         $.getScript('https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.js')
         $('<link>').attr('href','https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.css').attr('rel','stylesheet').appendTo('head')
       })
 
       var buttonData = [
-        {name: 'Email',    icon: 'fa-at',        http: false, link: '#captcha'},
-        {name: 'Phone',    icon: 'fa-phone',     http: false, link: '#captcha'},
-        {name: 'Skype',    icon: 'fa-skype',     http: false, link: '#captcha'},
-        {name: 'Messenger',icon: 'fa-comment',   http: true,  link: 'https://m.me/robertbastian1'},
-        {name: 'GitHub',   icon: 'fa-github',    http: true,  link: 'https://github.com/robertbastian'},
-        {name: 'LinkedIn', icon: 'fa-linkedin',  http: true,  link: 'https://linkedin.com/in/robertbastian2'},
-        {name: 'CV',       icon: 'fa-file-text', http: true,  link: 'https://drive.google.com/file/d/' +
-            (window.navigator.language == 'de' ? '0B0beurlDseSHRmFjZ0Nva0FMMjg' : '0B0beurlDseSHQzhYUzRpVno4VlU') + '/preview'}
+        {name: 'Email',    icon: 'fa-at',        link: '#captcha'},
+        {name: 'Phone',    icon: 'fa-phone',     link: '#captcha'},
+        {name: 'Messenger',icon: 'fa-comment',   link: 'https://m.me/robertbastian1'},
+        {name: 'GitHub',   icon: 'fa-github',    link: 'https://github.com/robertbastian'},
+        {name: 'LinkedIn', icon: 'fa-linkedin',  link: 'https://linkedin.com/in/robertbastian2'},
+        {name: 'CV',       icon: 'fa-file-text', link: 'https://drive.google.com/file/d/0B0beurlDseSHQzhYUzRpVno4VlU/preview'}
       ]
 
-      for (var i = 0; i < buttonData.length; i += 4)
-        $('<ul>').append(buttonData.slice(i,i+4).map(function(link){ return $('<li>').append(
-          $('<a>').attr('href',link.link).attr('title',link.name).attr('data-http',link.http).append(
+      for (var i = 0; i < buttonData.length; i += 3)
+        $('<ul>').append(buttonData.slice(i,i+3).map(link => $('<li>').append(
+          $('<a>').attr('href',link.link).attr('title',link.name) .append(
             $('<span>').addClass('fa-stack fa-lg fa-3x').append([
               $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x shadow'),
               $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
-        })).appendTo('body')
+        )).appendTo('body')
 
 
-      $('a[data-http="true"]').click(function(e){
+      $('a[href!="#captcha"]').click(event => {
         $('html').removeClass('loaded')
-        setTimeout(function(){
-          window.location = $(e.target).closest('a').attr('href')
+        setTimeout(() => {
+          window.location = $(event.target).closest('a').attr('href')
         },500)
         return false
       })
 
-      $('a[href="#captcha"]').click(function(e){
-        if ($(e.target).closest('a').attr('href') != '#captcha')
+      $('a[href="#captcha"]').click(event => {
+        if ($(event.target).closest('a').attr('href') != '#captcha')
           return true
         var captcha = $('<div>').css('padding','0px').css('width','302px').css('height','76px')
         grecaptcha.render(
           captcha[0],{
           sitekey:'6LdJUx4TAAAAAJ-hnAVuDq9FYnGY7uMk2oxl7IWM',
-          callback: function(response){
+          callback: response => {
             $.getJSON(
               'https://webtask.it.auth0.com/api/run/wt-robert-bastian_com-0/captcha_check',
               {response: response})
-            .done(function(reply){
-              $('a[title=Email]').attr('href',reply.email)
-              $('a[title=Phone]').attr('href',reply.phone)
-              $('a[title=Skype]').attr('href',reply.skype + (('ontouchstart' in window) ? '?call' : '?userinfo'))
-              $(e.target).closest('a')[0].click()
+            .done(reply => {
+              $('a[title=Email]').attr('href', 'mailto:' + reply.email)
+              $('a[title=Phone]').attr('href', 'tel:' + reply.phone)
+              $(event.target).closest('a')[0].click()
             })
-            .always(function(){
-              $('ul:last').nextAll().remove()
-            })
+            .always(() => $('ul:last').nextAll().remove())
           }}
         )
         captcha.modal()
