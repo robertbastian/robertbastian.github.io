@@ -67,11 +67,11 @@
 
       var buttonData = [
         {name: 'Email',    icon: 'fa-at',        link: '#captcha'},
-        {name: 'Phone',    icon: 'fa-phone',     link: '#captcha'},
+        {name: 'PGP Key',  icon: 'fa-key',       link: 'https://www.facebook.com/robertbastian1/publickey/download/'},
         {name: 'Messenger',icon: 'fa-comment',   link: 'https://m.me/robertbastian1'},
         {name: 'GitHub',   icon: 'fa-github',    link: 'https://github.com/robertbastian'},
         {name: 'LinkedIn', icon: 'fa-linkedin',  link: 'https://linkedin.com/in/robertbastian2'},
-        {name: 'CV',       icon: 'fa-file-text', link: 'https://drive.google.com/file/d/0B0beurlDseSHQzhYUzRpVno4VlU/preview'}
+        {name: 'Resume',   icon: 'fa-file-text', link: 'https://drive.google.com/file/d/0B0beurlDseSHQzhYUzRpVno4VlU/preview'}
       ]
 
       for (var i = 0; i < buttonData.length; i += 3)
@@ -83,7 +83,7 @@
         )).appendTo('body')
 
 
-      $('a[href!="#captcha"]').click(event => {
+      $('a[href!="#captcha"]').not('a[href*="publickey"]').click(event => {
         $('html').removeClass('loaded')
         setTimeout(() => {
           window.location = $(event.target).closest('a').attr('href')
