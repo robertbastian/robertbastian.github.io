@@ -48,7 +48,6 @@
     .shadow {
       text-shadow: 0px 0px 15px #ccc;
     }
-    /* Until FontAwesome adds the Messenger icon*/
     .fa-messenger {
         width: 1em;
         height: 1em;
@@ -90,7 +89,7 @@
         )).appendTo('body')
 
 
-      $('a[href!="#captcha"]').not('a[href*="publickey"]').click(event => {
+      $('a[href!="#captcha"]').click(event => {
         $('html').removeClass('loaded')
         setTimeout(() => {
           window.location = $(event.target).closest('a').attr('href')
@@ -107,7 +106,7 @@
           sitekey:'6LdJUx4TAAAAAJ-hnAVuDq9FYnGY7uMk2oxl7IWM',
           callback: response => {
             $.getJSON(
-              'https://webtask.it.auth0.com/api/run/wt-robert-bastian_com-0/captcha_check',
+              'https://us-central1-rbastianstandard.cloudfunctions.net/recaptcha',
               {response: response})
             .done(reply => {
               $('a[title=Email]').attr('href', 'mailto:' + reply.email)
