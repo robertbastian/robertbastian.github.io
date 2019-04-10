@@ -7,9 +7,9 @@
   <link rel='shortcut icon' href='graphics/favicon.png' type='image/png'>
   <link rel='apple-touch-icon-precomposed' href='graphics/apple-touch-icon-precomposed.png'>
 
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.0/webfont.js"></script>
-  <script> WebFont.load({custom:{families: ['FontAwesome'],testStrings:{'FontAwesome':'\uf00c\uf000'}}}) </script>
+  <script> WebFont.load({custom:{families:['Font Awesome 5 Free:n9','Font Awesome 5 Brands'],testStrings:{'Font Awesome 5 Free':'\uf1fa','Font Awesome 5 Brands':'\uf39f'}}})</script>
 
   <style>
     body {
@@ -36,7 +36,7 @@
       padding: 0;
     }
     li {
-      padding: 0 20px;
+      padding: 0 10px;
       display: inline-block;
     }
     a, a:visited {
@@ -46,18 +46,10 @@
       color: #404040;
     }
     .shadow {
-      text-shadow: 0px 0px 15px #ccc;
+      text-shadow: 0px 0px 5px #ccc;
     }
-    .fa-messenger {
-        width: 1em;
-        height: 1em;
-        top: 8px;
-        position: relative;
-        background: #6d6d6d;
-        -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.83 55.1"><path class="cls-1" style="fill:#6b6b6b" d="M0,26.27q0-.76,0-1.52c0-.2.07-.39.1-.59.2-1.38.28-2.79.6-4.14A24.73,24.73,0,0,1,11,5.08a28.26,28.26,0,0,1,19.18-5,27.59,27.59,0,0,1,5.84,1.15A26.92,26.92,0,0,1,49.35,10.2,23.86,23.86,0,0,1,54.8,26.85a22.48,22.48,0,0,1-.66,4.44,24.86,24.86,0,0,1-9.42,14A28.17,28.17,0,0,1,25.66,51a29.58,29.58,0,0,1-5.77-.91.9.9,0,0,0-.6.07C17,51.41,14.63,52.7,12.3,54l-2,1.12v-.44c0-3,0-5.91,0-8.87a.7.7,0,0,0-.31-.63,25.67,25.67,0,0,1-6.07-6.6A23.77,23.77,0,0,1,.09,26.78,4,4,0,0,0,0,26.27Zm45-7.76L45,18.44l-.32.15-12.6,7a.43.43,0,0,1-.63-.08q-2.89-3.06-5.8-6.09c-.36-.37-.74-.71-1.14-1.09L9.65,34.22l.07.09.72-.38q6.19-3.4,12.37-6.81a.44.44,0,0,1,.66.12c.41.47.84.91,1.26,1.36q2.59,2.79,5.18,5.58c.2.22.32.21.5,0s.6-.65.9-1l13.13-14C44.66,19,44.85,18.73,45,18.51Z"/></svg>') no-repeat;
-    }
-    .fa-messenger:hover {
-      background: #404040;
+    .fa-stack-1x {
+      font-size: 1.2em;
     }
   </style>
 
@@ -73,19 +65,19 @@
       })
 
       var buttonData = [
-        {name: 'Email',    icon: 'fa-at',        link: '#captcha'},
-        {name: 'Messenger',icon: 'fa-messenger', link: 'https://m.me/robertbastian1'},
-        {name: 'GitHub',   icon: 'fa-github',    link: 'https://github.com/robertbastian'},
-        {name: 'LinkedIn', icon: 'fa-linkedin',  link: 'https://linkedin.com/in/robertbastian2'},
-        {name: 'Resume',   icon: 'fa-file-text', link: 'https://drive.google.com/file/d/1_6IxCe2svvAI7Zpa_i_YZh8NJgSRS6Vg/preview'}
+        {name: 'Email',    icon: 'fa fa-at',                 link: '#captcha'},
+        {name: 'Messenger',icon: 'fab fa-facebook-messenger',link: 'https://m.me/robertbastian1'},
+        {name: 'GitHub',   icon: 'fab fa-github',            link: 'https://github.com/robertbastian'},
+        {name: 'LinkedIn', icon: 'fab fa-linkedin-in',       link: 'https://linkedin.com/in/robertbastian2'},
+        {name: 'Resume',   icon: 'fa fa-file-alt',           link: 'https://drive.google.com/file/d/1_6IxCe2svvAI7Zpa_i_YZh8NJgSRS6Vg/preview'}
       ]
 
       for (var i = 0; i < buttonData.length; i += 3)
         $('<ul>').append(buttonData.slice(i,i+3).map(link => $('<li>').append(
           $('<a>').attr('href',link.link).attr('title',link.name) .append(
             $('<span>').addClass('fa-stack fa-lg fa-3x').append([
-              $('<i>').addClass('fa fa-inverse fa-square fa-stack-2x shadow'),
-              $('<i>').addClass('fa fa-stack-1x '+link.icon)])))
+              $('<i>').addClass('fa fa-inverse fa-circle fa-stack-2x shadow'),
+              $('<i>').addClass('fa-stack-1x '+link.icon)])))
         )).appendTo('body')
 
 
