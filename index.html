@@ -3,7 +3,7 @@
 <head>
   <title>Robert Bastian</title>
 
-  <meta name='viewport' content='width=516px, user-scalable=no'>
+  <meta name='viewport' content='width=516, user-scalable=no'>
   <link rel='shortcut icon' href='graphics/favicon.png' type='image/png'>
   <link rel='apple-touch-icon-precomposed' href='graphics/apple-touch-icon-precomposed.png'>
 
@@ -16,7 +16,7 @@
       background-color: #ECECEC;
       text-align: center;
       min-width: 500px;
-      transition: opacity .8s ease-in;
+      transition: opacity .3s ease-in;
       opacity: 0;
     }
     .wf-active.loaded body {
@@ -59,6 +59,7 @@
       $(window).on('pageshow',() => $('html').addClass('loaded'))
 
       $(window).on('load',() => {
+        $.ajaxSetup({cache: true});
         $.getScript('https://www.google.com/recaptcha/api.js?render=explicit')
         $.getScript('https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.js')
         $('<link>').attr('href','https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.7.0/jquery.modal.min.css').attr('rel','stylesheet').appendTo('head')
@@ -86,7 +87,7 @@
         $('html').removeClass('loaded')
         setTimeout(() => {
           window.location = $(event.target).closest('a').attr('href')
-        },500)
+        },300)
         return false
       })
 
@@ -115,7 +116,7 @@
   </script>
 </head>
 <body>
-  <img src='graphics/logo.png'/>
+  <img src='graphics/logo.png' width='400' height='139'/>
   <hr/>
 </body>
 </html>
