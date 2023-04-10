@@ -110,7 +110,7 @@
           sitekey:'6LdJUx4TAAAAAJ-hnAVuDq9FYnGY7uMk2oxl7IWM',
           callback: response => {
             $.getJSON(
-              'https://us-central1-rbastianstandard.cloudfunctions.net/recaptcha',
+              'https://europe-central2-rbastianstandard.cloudfunctions.net/recaptcha',
               {response: response})
             .done(reply => {
               $('a[title=Email]').attr('href', 'mailto:' + reply.email)
