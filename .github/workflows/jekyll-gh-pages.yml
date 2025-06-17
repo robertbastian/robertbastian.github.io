@@ -30,9 +30,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Fetch TZ GeoJson
         run: |
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/2025b/timezones-1970.geojson.zip
-          unzip timezones-1970.geojson.zip
-          rm timezones-1970.geojson.zip
+          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/2025b/timezones.geojson.zip
+          unzip timezones.geojson.zip
+          rm timezones.geojson.zip
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll

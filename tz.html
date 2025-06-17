@@ -88,7 +88,7 @@
         let longSpecific = icu.TimeZoneFormatter.createSpecificLong(locale);
         let exemplar = icu.TimeZoneFormatter.createExemplarCity(locale);
 
-        fetch('combined-1970.json')
+        fetch('combined.json')
             .then(response => response.json())
             .then((geojson) => {
                 for (let feature of geojson.features) {
