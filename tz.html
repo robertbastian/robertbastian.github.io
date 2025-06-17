@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Timezones</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            background: rgb(14, 21, 30);
+            height: 100%;
+        }
+
+        #map {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            background-color: #333;
+        }
+
+        h4 {
+            margin-block: auto;
+        }
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .info > label {
+            font-size: 16px;
+        }
+
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@latest/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@latest/dist/leaflet.js"></script>
+
+    <script type="module">
+        import * as icu from "https://unpkg.com/icu@2.0.0";
+
+        var map = L.map('map', { worldCopyJump: true }).setView([0, 0], 3);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png', {
+            minZoom: 3,
+        }).addTo(map);
+
+        map.createPane('zones');
+        map.getPane('zones').style.opacity = .6;
+
+        map.createPane('labels');
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}@2x.png', {
+            minZoom: 3,
+            pane: 'labels'
+        }).addTo(map);
+
+        var useDst = false;
+        const dstCheckbox = document.createElement("input");
+        var dst = L.control({ position: 'bottomright' });
+        dst.onAdd = (map) => {
+            let div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+            dstCheckbox.type = "checkbox";
+            dstCheckbox.id = "dst";
+            div.appendChild(dstCheckbox);
+            var label = document.createElement('label')
+            label.htmlFor = "dst";
+            label.appendChild(document.createTextNode('Use DST'))
+            div.appendChild(label);
+            return div
+        };
+        dst.addTo(map);
+
+        var tooltip = L.tooltip({ direction: 'top' });
+
+        let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
+        let time = icu.Time.startOfDay();
+        let locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl') ?? navigator.language);
+        let longSpecific = icu.TimeZoneFormatter.createSpecificLong(locale);
+        let exemplar = icu.TimeZoneFormatter.createExemplarCity(locale);
+
+        fetch('combined-1970.json')
+            .then(response => response.json())
+            .then((geojson) => {
+                for (let feature of geojson.features) {
+                    if (feature.properties.tzid == 'America/Coyhaique') {
+                        feature.properties.tzid = 'America/Punta_Arenas';
+                    }
+                    feature.properties.tz = new icu.IanaParser().parse(feature.properties.tzid);
+                    feature.properties.offsets = new icu.VariantOffsetsCalculator().computeOffsetsFromTimeZoneAndDateTime(feature.properties.tz, date, time);
+                    feature.properties.maxLng = -180;
+                    feature.properties.minLng = 180;
+                    let flat = feature.geometry.coordinates.flat(10);
+                    for (var i = 0; i < flat.length; i += 2) {
+                        feature.properties.maxLng = Math.max(feature.properties.maxLng, flat[i]);
+                        feature.properties.minLng = Math.min(feature.properties.minLng, flat[i]);
+                    }
+                }
+
+                geojson = L.geoJson(geojson, {
+                    pane: 'zones',
+                    style: (feature) => {
+                        let props = feature.properties;
+                        let offset = (useDst ? props.offsets.daylight : null) ?? props.offsets.standard;
+                        return {
+                            fillColor: `hsl(${Math.floor(offset.seconds / 12 / 60 / 60 * 180 + 180)} 50 50)`,
+                            weight: 1,
+                            color: 'white',
+                            fillOpacity: 1
+                        };
+                    },
+                    onEachFeature: (feature, layer) => {
+                        layer.on({
+                            mousemove: (e) => {
+                                let props = e.target.feature.properties
+                                let normal = (useDst ? props.offsets.daylight : null) ?? props.offsets.standard;
+                                let solar = icu.UtcOffset.fromSeconds(Math.floor(e.latlng.lng * 12.0 * 60 / 180) * 60); // rounded to minutes
+
+                                var diff = normal.seconds - solar.seconds;
+                                if (diff < -12 * 3600) {
+                                    diff += 24 * 3600;
+                                } else if (diff > 12 * 3600) {
+                                    diff -= 24 * 3600;
+                                }
+                                let difff = (diff < 0 ? '-' : '+') + Math.floor(Math.abs(diff) / 3600).toString() + ':' + Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0");
+
+                                let tzi = props.tz
+                                    .withOffset(normal)
+                                    .atDateTimeIso(date, time)
+                                    .withVariant((useDst && props.offsets.daylight) ? icu.TimeZoneVariant.Daylight : icu.TimeZoneVariant.Standard);
+
+                                let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
+
+                                tooltip.setContent(
+                                    `<h4>${longSpecific.format(tzi)}</h4>
+                                    ${exemplar.format(tzi)}<br>
+                                    ${offsetToString(normal)} Normal Time<br>
+                                    ${offsetToString(solar)} Solar Time<br>
+                                    ${difff} difference`
+                                )
+                                    .setLatLng(e.latlng)
+                                    .addTo(map);
+                            },
+                            mouseout: (e) => {
+                                tooltip.close();
+                            },
+                        });
+                    }
+                }).addTo(map);
+
+                dstCheckbox.addEventListener('input', (e) => {
+                    useDst = e.target.checked;
+                    geojson.resetStyle();
+                })
+            });
+    </script>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+</html>
