@@ -43,11 +43,11 @@
         }
     </style>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@latest/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@latest/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script type="module">
-        import * as icu from "https://unpkg.com/icu@2.0.0";
+        import * as icu from "https://unpkg.com/icu@2.0.4";
 
         var map = L.map('map', { worldCopyJump: true }).setView([0, 0], 3);
 
@@ -80,6 +80,16 @@
         };
         dst.addTo(map);
 
+        var version = L.control({ position: 'topright' });
+        version.onAdd = (map) => {
+            let div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+            var label = document.createElement('label')
+            label.appendChild(document.createTextNode('2025b'))
+            div.appendChild(label);
+            return div
+        };
+        version.addTo(map);
+
         var tooltip = L.tooltip({ direction: 'top' });
 
         let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
@@ -97,9 +107,6 @@
             .then(response => response.json())
             .then((geojson) => {
                 for (let feature of geojson.features) {
-                    if (feature.properties.tzid == 'America/Coyhaique') {
-                        feature.properties.tzid = 'America/Punta_Arenas';
-                    }
                     feature.properties.tz = new icu.IanaParser().parse(feature.properties.tzid);
                     feature.properties.offsets = new icu.VariantOffsetsCalculator().computeOffsetsFromTimeZoneAndDateTime(feature.properties.tz, date, time);
                     feature.properties.maxLng = -180;
