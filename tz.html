@@ -84,7 +84,12 @@
 
         let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
         let time = icu.Time.startOfDay();
-        let locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl') ?? navigator.language);
+        let locale;
+        try { 
+            locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl'));
+        } catch (e) {
+            locale = icu.Locale.fromString(navigator.language);
+        }
         let longSpecific = icu.TimeZoneFormatter.createSpecificLong(locale);
         let exemplar = icu.TimeZoneFormatter.createExemplarCity(locale);
 
