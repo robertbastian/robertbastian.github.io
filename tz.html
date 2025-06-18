@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
     <title>Timezones</title>
     <style>
         html,
@@ -26,20 +27,25 @@
 
         .info {
             padding: 6px 8px;
-            font: 14px/16px Arial, Helvetica, sans-serif;
-            background: white;
+            font-size: 16px;
             background: rgba(255, 255, 255, 0.8);
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
         }
 
-        .info > label {
-            font-size: 16px;
+        .info > h4 {
+            text-align: center;
         }
 
-        .info h4 {
-            margin: 0 0 5px;
-            color: #777;
+        .legend {
+            padding: 6px;
+            background-color: #fff;
+            border: 1px solid #fff;
+            border-radius: 3px;
+            color: #222;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
     </style>
 
@@ -69,26 +75,27 @@
         var dst = L.control({ position: 'bottomright' });
         dst.onAdd = (map) => {
             let div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+            var h4 = document.createElement('h4')
+            h4.appendChild(document.createTextNode('2025b'))
+            div.appendChild(h4);
             dstCheckbox.type = "checkbox";
             dstCheckbox.id = "dst";
             div.appendChild(dstCheckbox);
             var label = document.createElement('label')
             label.htmlFor = "dst";
-            label.appendChild(document.createTextNode('Use DST'))
+            label.appendChild(document.createTextNode('DST'))
             div.appendChild(label);
             return div
         };
         dst.addTo(map);
 
-        var version = L.control({ position: 'topright' });
-        version.onAdd = (map) => {
-            let div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-            var label = document.createElement('label')
-            label.appendChild(document.createTextNode('2025b'))
-            div.appendChild(label);
+        var legend = L.control({ position: 'bottomleft' });
+        legend.onAdd = (map) => {
+            let div = L.DomUtil.create('div', 'legend'); // create a div with a class "info"
+            div.innerHTML = '<h4>Exemplar City (VVV)</h4>Generic Location (VVVV)<br>Generic Non-Location (vvvv)<br>Specific Non-Location (zzzz/z)<br>Localized Offset (OOOO)<br><span style="color:gray">Specific Non-Location (zzzz/z)</span><br><span style="color:gray">Localized Offset (OOOO)</span>'
             return div
         };
-        version.addTo(map);
+        legend.addTo(map);
 
         var tooltip = L.tooltip({ direction: 'top' });
 
@@ -100,15 +107,25 @@
         } catch (e) {
             locale = icu.Locale.fromString(navigator.language);
         }
+        let longGeneric = icu.TimeZoneFormatter.createGenericLong(locale);
+        let shortGeneric = icu.TimeZoneFormatter.createGenericShort(locale);
         let longSpecific = icu.TimeZoneFormatter.createSpecificLong(locale);
+        let shortSpecific = icu.TimeZoneFormatter.createSpecificShort(locale);
+        let location = icu.TimeZoneFormatter.createLocation(locale);
         let exemplar = icu.TimeZoneFormatter.createExemplarCity(locale);
+        let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLong(locale);
+        let shortOffset = icu.TimeZoneFormatter.createLocalizedOffsetShort(locale);
 
         fetch('combined.json')
             .then(response => response.json())
             .then((geojson) => {
                 for (let feature of geojson.features) {
-                    feature.properties.tz = new icu.IanaParser().parse(feature.properties.tzid);
-                    feature.properties.offsets = new icu.VariantOffsetsCalculator().computeOffsetsFromTimeZoneAndDateTime(feature.properties.tz, date, time);
+                    let tz = new icu.IanaParser().parse(feature.properties.tzid);
+                    feature.properties.offsets = new icu.VariantOffsetsCalculator().computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
+                    feature.properties.standard = tz.withOffset(feature.properties.offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard);
+                    if (feature.properties.offsets.daylight) {
+                        feature.properties.daylight = tz.withOffset(feature.properties.offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight);
+                    }
                     feature.properties.maxLng = -180;
                     feature.properties.minLng = 180;
                     let flat = feature.geometry.coordinates.flat(10);
@@ -131,34 +148,81 @@
                         };
                     },
                     onEachFeature: (feature, layer) => {
+                        // if (feature.geometry.type == 'Polygon') {
+                        //     let bounds = layer.getBounds();
+                        //     if (Math.max(Math.abs(bounds.getNorth() - bounds.getSouth()), Math.abs((bounds.getEast() + 360) % 360 - (bounds.getWest() + 360) % 360)) > 5) {
+                        //         L.tooltip(bounds.getCenter(), { content: location.format(feature.properties.standard), direction: 'center' }).addTo(map)
+                        //     }
+                        // } else if (feature.geometry.type == 'MultiPolygon') {
+                        //     feature.geometry.coordinates.forEach(polygon => {
+                        //         let bounds = L.polygon(polygon.map((a) => a.map((b) => [b[1], b[0]]))).getBounds();
+                        //         if (Math.max(Math.abs(bounds.getNorth() - bounds.getSouth()), Math.abs((bounds.getEast() + 360) % 360 - (bounds.getWest() + 360) % 360)) > 5) {
+                        //             L.tooltip(bounds.getCenter(), { content: location.format(feature.properties.standard), direction: 'center' }).addTo(map)
+                        //         }
+                        //     });
+                        // }
+
                         layer.on({
                             mousemove: (e) => {
-                                let props = e.target.feature.properties
-                                let normal = (useDst ? props.offsets.daylight : null) ?? props.offsets.standard;
-                                let solar = icu.UtcOffset.fromSeconds(Math.floor(e.latlng.lng * 12.0 * 60 / 180) * 60); // rounded to minutes
+                                let props = e.target.feature.properties;
 
-                                var diff = normal.seconds - solar.seconds;
+                                let d = props.daylight;
+                                let s = props.standard;
+
+                                let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
+
+                                let lines = [
+                                    `<h4>${exemplar.format(s)}</h4>`
+                                ];
+
+                                lines.push(location.format(s));
+                                
+                                if (shortGeneric.format(s) != location.format(s)) {
+                                    lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
+                                } else {
+                                    lines.push(longGeneric.format(s));
+                                }
+
+                                if (shortSpecific.format(s) != shortOffset.format(s)) {
+                                    lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
+                                } else {
+                                    lines.push(longSpecific.format(s));
+                                }
+
+                                var diff = props.offsets.standard.seconds - Math.floor(e.latlng.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                                 if (diff < -12 * 3600) {
                                     diff += 24 * 3600;
                                 } else if (diff > 12 * 3600) {
                                     diff -= 24 * 3600;
                                 }
-                                let difff = (diff < 0 ? '-' : '+') + Math.floor(Math.abs(diff) / 3600).toString() + ':' + Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0");
+                                lines.push(`${longOffset.format(s)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
 
-                                let tzi = props.tz
-                                    .withOffset(normal)
-                                    .atDateTimeIso(date, time)
-                                    .withVariant((useDst && props.offsets.daylight) ? icu.TimeZoneVariant.Daylight : icu.TimeZoneVariant.Standard);
+                                if (d) {
+                                    if (shortSpecific.format(d) != shortOffset.format(d)) {
+                                        lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                                    } else {
+                                        lines.push(longSpecific.format(d));
+                                    }
+                                    diff = props.offsets.daylight.seconds - Math.floor(e.latlng.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                                    if (diff < -12 * 3600) {
+                                        diff += 24 * 3600;
+                                    } else if (diff > 12 * 3600) {
+                                        diff -= 24 * 3600;
+                                    }
+                                    lines.push(`${longOffset.format(d)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                                }
 
-                                let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
+                                if (d && useDst) {
+                                    [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
+                                    [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
+                                }
 
-                                tooltip.setContent(
-                                    `<h4>${longSpecific.format(tzi)}</h4>
-                                    ${exemplar.format(tzi)}<br>
-                                    ${offsetToString(normal)} Normal Time<br>
-                                    ${offsetToString(solar)} Solar Time<br>
-                                    ${difff} difference`
-                                )
+                                if (d) {
+                                    lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
+                                    lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
+                                }
+
+                                tooltip.setContent(lines.join('<br>').replace('<br>', ''))
                                     .setLatLng(e.latlng)
                                     .addTo(map);
                             },
