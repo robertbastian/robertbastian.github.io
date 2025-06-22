@@ -6,98 +6,32 @@
     <title>Timezones</title>
     <style>
         html,
-        body {
-            height: 100%;
-            padding: 0;
-            margin: 0;
-            background: rgb(14, 21, 30);
-            height: 100%;
-        }
-
+        body,
         #map {
-            position: absolute;
             height: 100%;
-            width: 100%;
+            margin: 0;
             background-color: #333;
         }
 
-        h4 {
+        .info>h4 {
             margin-block: auto;
         }
 
         .info {
-            padding: 6px 8px;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            border-radius: 5px;
-        }
-
-        .info>h4 {
-            text-align: center;
-        }
-
-        .legend {
-            padding: 6px;
-            background-color: #fff;
-            border: 1px solid #fff;
-            border-radius: 3px;
-            color: #222;
-            white-space: nowrap;
-            pointer-events: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            line-height: 1.5;
         }
     </style>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src='https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js'></script>
+    <link href='https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css' rel='stylesheet' />
 
     <script type="module">
         import * as icu from "https://unpkg.com/icu@2.0.4";
 
-        var map = L.map('map', { worldCopyJump: true }).setView([0, 0], 3);
-
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png', {
-            minZoom: 3,
-        }).addTo(map);
-
-        map.createPane('zones');
-        map.getPane('zones').style.opacity = .6;
-
-        map.createPane('labels');
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}@2x.png', {
-            minZoom: 3,
-            pane: 'labels'
-        }).addTo(map);
-
-        var useDst = false;
-        const dstCheckbox = document.createElement("input");
-        var dst = L.control({ position: 'bottomright' });
-        dst.onAdd = (map) => {
-            let div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-            var h4 = document.createElement('h4')
-            h4.appendChild(document.createTextNode('2025b'))
-            div.appendChild(h4);
-            dstCheckbox.type = "checkbox";
-            dstCheckbox.id = "dst";
-            div.appendChild(dstCheckbox);
-            var label = document.createElement('label')
-            label.htmlFor = "dst";
-            label.appendChild(document.createTextNode('DST'))
-            div.appendChild(label);
-            return div
-        };
-        dst.addTo(map);
-
-        var legend = L.control({ position: 'bottomleft' });
-        legend.onAdd = (map) => {
-            let div = L.DomUtil.create('div', 'legend'); // create a div with a class "info"
-            div.innerHTML = '<h4>Exemplar City (VVV)</h4>Generic Location (VVVV)<br>Generic Non-Location (vvvv)<br>Specific Non-Location (zzzz/z)<br>Localized Offset (OOOO)<br><span style="color:gray">Specific Non-Location (zzzz/z)</span><br><span style="color:gray">Localized Offset (OOOO)</span>'
-            return div
-        };
-        legend.addTo(map);
-
-        var tooltip = L.tooltip({ direction: 'top' });
+        // Replaced during deployment
+        const tzdbTag = '<tzdb version>';
+        const cldrTag = '<cldr version>';
 
         let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
         let time = icu.Time.startOfDay();
@@ -108,143 +42,225 @@
             locale = icu.Locale.fromString(navigator.language);
         }
 
-        Promise.all([
-            fetch('tzs.blob').then(response => response.arrayBuffer()),
-            fetch('combined.json').then(response => response.json())
-        ]).then(([tzblob, geojson]) => {
-            let provider = icu.DataProvider.fromByteSlice(new Uint8Array(tzblob));
-            provider.enableLocaleFallbackWith(new icu.LocaleFallbacker());
+        let provider = icu.DataProvider.fromByteSlice(new Uint8Array(await fetch('tzs.blob').then(response => response.arrayBuffer())));
+        provider.enableLocaleFallbackWith(icu.LocaleFallbacker.withoutData());
 
-            let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, locale);
-            let shortGeneric = icu.TimeZoneFormatter.createGenericShortWithProvider(provider, locale);
-            let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, locale);
-            let shortSpecific = icu.TimeZoneFormatter.createSpecificShortWithProvider(provider, locale);
-            let location = icu.TimeZoneFormatter.createLocationWithProvider(provider, locale);
-            let exemplar = icu.TimeZoneFormatter.createExemplarCityWithProvider(provider, locale);
-            let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLongWithProvider(provider, locale);
-            let shortOffset = icu.TimeZoneFormatter.createLocalizedOffsetShortWithProvider(provider, locale);
-            let iana = icu.IanaParser.createWithProvider(provider);
-            let offsetsCalc = icu.VariantOffsetsCalculator.createWithProvider(provider);
+        let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, locale);
+        let shortGeneric = icu.TimeZoneFormatter.createGenericShortWithProvider(provider, locale);
+        let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, locale);
+        let shortSpecific = icu.TimeZoneFormatter.createSpecificShortWithProvider(provider, locale);
+        let location = icu.TimeZoneFormatter.createLocationWithProvider(provider, locale);
+        let exemplar = icu.TimeZoneFormatter.createExemplarCityWithProvider(provider, locale);
+        let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLongWithProvider(provider, locale);
+        let shortOffset = icu.TimeZoneFormatter.createLocalizedOffsetShortWithProvider(provider, locale);
+        let iana = icu.IanaParser.createWithProvider(provider);
+        let offsetsCalc = icu.VariantOffsetsCalculator.createWithProvider(provider);
 
-            for (let feature of geojson.features) {
-                let tz = iana.parse(feature.properties.tzid);
-                feature.properties.offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
-                feature.properties.standard = tz.withOffset(feature.properties.offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard);
-                if (feature.properties.offsets.daylight) {
-                    feature.properties.daylight = tz.withOffset(feature.properties.offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight);
+        var map = new maplibregl.Map({
+            container: 'map',
+            style: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`,
+            center: [0, 20],
+            hash: true,
+            attributionControl: { compact: true, customAttribution: `CLDR ${cldrTag} (${locale}), TZDB ${tzdbTag}` },
+            locale: locale.toString(),
+            pixelRatio: 2 * devicePixelRatio,
+            zoom: 3
+        });
+
+        var dst = false;
+        let stdcolors = {};
+        let dstcolors = {};
+        map.on('click', (e) => {
+            dst = !dst;
+            map.setPaintProperty('fill', 'fill-color', ['get', ['get', 'tzid', ['properties']], ['literal', dst ? dstcolors : stdcolors]]);
+        });
+
+        map.on('style.load', () => {
+            map.style.setProjection({ type: 'globe' });
+
+            let name;
+            if (locale.compareToString('und') == 0) {
+                name = 'int_name'
+            } else {
+                let ostLocale = icu.Locale.fromString(locale.toString());
+                let expander = icu.LocaleExpander.createCommonWithProvider(provider);
+                expander.maximize(ostLocale);
+                ostLocale.region = '';
+                expander.minimize(ostLocale);
+                name = 'name:' + ostLocale;
+            }
+            map.getStyle().layers.forEach((l) => {
+                if (l.type === 'symbol') {
+                    map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', name], ['get', 'name']]);
                 }
-                feature.properties.maxLng = -180;
-                feature.properties.minLng = 180;
-                let flat = feature.geometry.coordinates.flat(10);
-                for (var i = 0; i < flat.length; i += 2) {
-                    feature.properties.maxLng = Math.max(feature.properties.maxLng, flat[i]);
-                    feature.properties.minLng = Math.min(feature.properties.minLng, flat[i]);
+            });
+
+            map.addSource('geojson', {
+                type: 'geojson',
+                data: 'combined.json',
+                generateId: true
+            });
+
+            map.getSource('geojson').getData().then((geojson) => {
+                for (let feature of geojson.features) {
+                    let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(iana.parse(feature.properties.tzid), date, time);
+                    stdcolors[feature.properties.tzid] = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 50%, 50%)`;
+                    dstcolors[feature.properties.tzid] = offsets.daylight ? `hsl(${offsets.daylight.seconds / 12 / 60 / 60 * 180 + 180}, 50%, 50%)` : stdcolors[feature.properties.tzid];
                 }
+                map.setPaintProperty('fill', 'fill-color', ['get', ['get', 'tzid', ['properties']], ['literal', dst ? dstcolors : stdcolors]]);
+            });
+
+            map.addLayer(
+                {
+                    'id': 'fill',
+                    'type': 'fill',
+                    'source': 'geojson',
+                    'paint': {
+                        'fill-color': 'blue',
+                        // Urumqi is entirely in Shangai, don't need to fill
+                        'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, .6],
+                    }
+                },
+                // Find the index of the first symbol layer in the map style
+                map.getStyle().layers.find((l) => l.id != 'waterway_label' && l.type === 'symbol').id
+            );
+            map.addLayer(
+                {
+                    'id': 'outline',
+                    'type': 'line',
+                    'source': 'geojson',
+                    'paint': {
+                        'line-color': '#fff',
+                        'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2, 1]
+                    }
+                },
+                // Find the index of the first symbol layer in the map style
+                map.getStyle().layers.find((l) => l.id != 'waterway_label' && l.type === 'symbol').id
+            );
+        });
+
+        let hoveredStateId = null;
+        map.on('mousemove', 'fill', (e) => {
+            if (e.features[0]?.id) {
+                if (hoveredStateId) {
+                    map.setFeatureState(
+                        { source: 'geojson', id: hoveredStateId },
+                        { hover: false }
+                    );
+                }
+                hoveredStateId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'geojson', id: hoveredStateId },
+                    { hover: true }
+                );
+            }
+        });
+        map.on('mouseleave', 'fill', () => {
+            if (hoveredStateId) {
+                map.setFeatureState(
+                    { source: 'geojson', id: hoveredStateId },
+                    { hover: false }
+                );
+            }
+            hoveredStateId = null;
+        });
+
+        map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
+        map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false }), 'bottom-left');
+        map.addControl(new maplibregl.GlobeControl(), 'bottom-left');
+
+        class TzInfoControl {
+            onAdd(map) {
+                this._map = map;
+                this._container = document.createElement('div');
+                this._container.className = 'info maplibregl-ctrl maplibregl-ctrl-group';
+                this.reset();
+                map.on("mouseenter", 'fill', this.handleEvent.bind(this));
+                map.on("click", 'fill', this.handleEvent.bind(this));
+                map.on("mousemove", 'fill', this.handleEvent.bind(this));
+                map.on("mouseleave", 'fill', this.reset.bind(this));
+                return this._container;
             }
 
-            geojson = L.geoJson(geojson, {
-                pane: 'zones',
-                style: (feature) => {
-                    let props = feature.properties;
-                    let offset = (useDst ? props.offsets.daylight : null) ?? props.offsets.standard;
-                    return {
-                        fillColor: `hsl(${Math.floor(offset.seconds / 12 / 60 / 60 * 180 + 180)} 50 50)`,
-                        weight: 1,
-                        color: 'white',
-                        fillOpacity: 1
-                    };
-                },
-                onEachFeature: (feature, layer) => {
-                    // if (feature.geometry.type == 'Polygon') {
-                    //     let bounds = layer.getBounds();
-                    //     if (Math.max(Math.abs(bounds.getNorth() - bounds.getSouth()), Math.abs((bounds.getEast() + 360) % 360 - (bounds.getWest() + 360) % 360)) > 5) {
-                    //         L.tooltip(bounds.getCenter(), { content: location.format(feature.properties.standard), direction: 'center' }).addTo(map)
-                    //     }
-                    // } else if (feature.geometry.type == 'MultiPolygon') {
-                    //     feature.geometry.coordinates.forEach(polygon => {
-                    //         let bounds = L.polygon(polygon.map((a) => a.map((b) => [b[1], b[0]]))).getBounds();
-                    //         if (Math.max(Math.abs(bounds.getNorth() - bounds.getSouth()), Math.abs((bounds.getEast() + 360) % 360 - (bounds.getWest() + 360) % 360)) > 5) {
-                    //             L.tooltip(bounds.getCenter(), { content: location.format(feature.properties.standard), direction: 'center' }).addTo(map)
-                    //         }
-                    //     });
-                    // }
+            handleEvent(e) {
+                let tz = iana.parse(e.features[0].properties.tzid);
+                let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
+                let s = tz.withOffset(offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard);
+                let d = offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) : null;
 
-                    layer.on({
-                        mousemove: (e) => {
-                            let props = e.target.feature.properties;
+                let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
 
-                            let d = props.daylight;
-                            let s = props.standard;
+                let lines = [
+                    `<h4>${exemplar.format(s)}</h4>`
+                ];
 
-                            let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
+                lines.push(location.format(s));
 
-                            let lines = [
-                                `<h4>${exemplar.format(s)}</h4>`
-                            ];
-
-                            lines.push(location.format(s));
-
-                            if (shortGeneric.format(s) != location.format(s)) {
-                                lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
-                            } else {
-                                lines.push(longGeneric.format(s));
-                            }
-
-                            if (shortSpecific.format(s) != shortOffset.format(s)) {
-                                lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
-                            } else {
-                                lines.push(longSpecific.format(s));
-                            }
-
-                            var diff = props.offsets.standard.seconds - Math.floor(e.latlng.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
-                            if (diff < -12 * 3600) {
-                                diff += 24 * 3600;
-                            } else if (diff > 12 * 3600) {
-                                diff -= 24 * 3600;
-                            }
-                            lines.push(`${longOffset.format(s)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
-
-                            if (d) {
-                                if (shortSpecific.format(d) != shortOffset.format(d)) {
-                                    lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
-                                } else {
-                                    lines.push(longSpecific.format(d));
-                                }
-                                diff = props.offsets.daylight.seconds - Math.floor(e.latlng.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
-                                if (diff < -12 * 3600) {
-                                    diff += 24 * 3600;
-                                } else if (diff > 12 * 3600) {
-                                    diff -= 24 * 3600;
-                                }
-                                lines.push(`${longOffset.format(d)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
-                            }
-
-                            if (d && useDst) {
-                                [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
-                                [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
-                            }
-
-                            if (d) {
-                                lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
-                                lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
-                            }
-
-                            tooltip.setContent(lines.join('<br>').replace('<br>', ''))
-                                .setLatLng(e.latlng)
-                                .addTo(map);
-                        },
-                        mouseout: (e) => {
-                            tooltip.close();
-                        },
-                    });
+                if (shortGeneric.format(s) != location.format(s)) {
+                    lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
+                } else {
+                    lines.push(longGeneric.format(s));
                 }
-            }).addTo(map);
 
-            dstCheckbox.addEventListener('input', (e) => {
-                useDst = e.target.checked;
-                geojson.resetStyle();
-            })
-        });
+                if (shortSpecific.format(s) != shortOffset.format(s)) {
+                    lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
+                } else {
+                    lines.push(longSpecific.format(s));
+                }
+
+                var diff = offsets.standard.seconds - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                if (diff < -12 * 3600) {
+                    diff += 24 * 3600;
+                } else if (diff > 12 * 3600) {
+                    diff -= 24 * 3600;
+                }
+                lines.push(`${longOffset.format(s)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+
+                if (d) {
+                    if (shortSpecific.format(d) != shortOffset.format(d)) {
+                        lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                    } else {
+                        lines.push(longSpecific.format(d));
+                    }
+                    diff = offsets.daylight.seconds - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                    if (diff < -12 * 3600) {
+                        diff += 24 * 3600;
+                    } else if (diff > 12 * 3600) {
+                        diff -= 24 * 3600;
+                    }
+                    lines.push(`${longOffset.format(d)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                }
+
+                if (d && dst) {
+                    [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
+                    [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
+                }
+
+                if (d) {
+                    lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
+                    lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
+                }
+
+                this._container.innerHTML = lines.join('<br>').replace('<br>', '');
+            }
+
+            reset() {
+                this._container.innerHTML = `
+                    <h4>Exemplar City (VVV)</h4>
+                    Generic Location (VVVV)<br>
+                    Generic Non-Location (vvvv)<br>
+                    Specific Non-Location (zzzz/z)<br>
+                    Localized Offset (OOOO)<br>
+                    <span style="color:gray">Specific Non-Location (zzzz/z)</span><br>
+                    <span style="color:gray">Localized Offset (OOOO)</span>`;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+        map.addControl(new TzInfoControl(), 'top-right');
     </script>
 </head>
 

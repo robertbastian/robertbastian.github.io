@@ -25,16 +25,28 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    env:
+      TZDB: 2025b
+      CLDR: 47.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Fetch TZ GeoJson
+      - name: Build data
         run: |
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/2025b/timezones.geojson.zip
+          sed -i -e "s/<tzdb version>/$TZDB/g" tz.html
+          sed -i -e "s/<cldr version>/$CLDR/g" tz.html
+          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones.geojson.zip
           unzip timezones.geojson.zip
           rm timezones.geojson.zip
           cargo install --git https://github.com/unicode-org/icu4x icu4x-datagen
-          icu4x-datagen --locales modern --markers TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 TimezoneMetazonePeriodsV1 TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 TimezoneVariantsOffsetsV1 DecimalSymbolsV1 DecimalDigitsV1 TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 --format blob --out tzs.blob
+          icu4x-datagen --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
+            TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
+              TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
+              TimezoneMetazonePeriodsV1 TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
+              DecimalSymbolsV1 DecimalDigitsV1 \
+            TimezoneVariantsOffsetsV1 \
+            TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 \
+            LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
