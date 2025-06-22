@@ -33,8 +33,6 @@
         const tzdbTag = '<tzdb version>';
         const cldrTag = '<cldr version>';
 
-        let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
-        let time = icu.Time.startOfDay();
         let locale;
         try {
             locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl'));
@@ -43,18 +41,6 @@
         }
 
         let provider = icu.DataProvider.fromByteSlice(new Uint8Array(await fetch('tzs.blob').then(response => response.arrayBuffer())));
-        provider.enableLocaleFallbackWith(icu.LocaleFallbacker.withoutData());
-
-        let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, locale);
-        let shortGeneric = icu.TimeZoneFormatter.createGenericShortWithProvider(provider, locale);
-        let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, locale);
-        let shortSpecific = icu.TimeZoneFormatter.createSpecificShortWithProvider(provider, locale);
-        let location = icu.TimeZoneFormatter.createLocationWithProvider(provider, locale);
-        let exemplar = icu.TimeZoneFormatter.createExemplarCityWithProvider(provider, locale);
-        let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLongWithProvider(provider, locale);
-        let shortOffset = icu.TimeZoneFormatter.createLocalizedOffsetShortWithProvider(provider, locale);
-        let iana = icu.IanaParser.createWithProvider(provider);
-        let offsetsCalc = icu.VariantOffsetsCalculator.createWithProvider(provider);
 
         var map = new maplibregl.Map({
             container: 'map',
@@ -68,46 +54,62 @@
         });
 
         var dst = false;
-        let stdcolors = {};
-        let dstcolors = {};
         map.on('click', (e) => {
             dst = !dst;
-            map.setPaintProperty('fill', 'fill-color', ['get', ['get', 'tzid', ['properties']], ['literal', dst ? dstcolors : stdcolors]]);
+            map.setPaintProperty('fill', 'fill-color', ['coalesce', ['feature-state', dst ? 'dstcolor' : 'stdcolor'], ['rgba', 0, 0, 0, 0]]);
         });
 
+
+        let labelName;
+        if (locale.compareToString('und') == 0) {
+            labelName = 'int_name'
+        } else {
+            let ostLocale = icu.Locale.fromString(locale.toString());
+            let expander = icu.LocaleExpander.createCommonWithProvider(provider);
+            expander.maximize(ostLocale);
+            ostLocale.region = '';
+            expander.minimize(ostLocale);
+            labelName = 'name:' + ostLocale;
+        }
         map.on('style.load', () => {
             map.style.setProjection({ type: 'globe' });
-
-            let name;
-            if (locale.compareToString('und') == 0) {
-                name = 'int_name'
-            } else {
-                let ostLocale = icu.Locale.fromString(locale.toString());
-                let expander = icu.LocaleExpander.createCommonWithProvider(provider);
-                expander.maximize(ostLocale);
-                ostLocale.region = '';
-                expander.minimize(ostLocale);
-                name = 'name:' + ostLocale;
-            }
             map.getStyle().layers.forEach((l) => {
                 if (l.type === 'symbol') {
-                    map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', name], ['get', 'name']]);
+                    map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', labelName], ['get', 'name']]);
                 }
             });
 
             map.addSource('geojson', {
                 type: 'geojson',
                 data: 'combined.json',
-                generateId: true
+                promoteId: 'tzid'
             });
 
-            map.getSource('geojson').getData().then((geojson) => {
-                for (let feature of geojson.features) {
-                    let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(iana.parse(feature.properties.tzid), date, time);
-                    stdcolors[feature.properties.tzid] = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 50%, 50%)`;
-                    dstcolors[feature.properties.tzid] = offsets.daylight ? `hsl(${offsets.daylight.seconds / 12 / 60 / 60 * 180 + 180}, 50%, 50%)` : stdcolors[feature.properties.tzid];
+            let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
+            let time = icu.Time.startOfDay();
+            let iana = icu.IanaParser.createWithProvider(provider);
+            let offsetsCalc = icu.VariantOffsetsCalculator.createWithProvider(provider);
+            map.on('sourcedata', () => {
+                for (let feature of map.querySourceFeatures('geojson')) {
+                    if (map.getFeatureState({ source: 'geojson', id: feature.id }).stdcolor) {
+                        continue;
+                    }
+                    let tz = iana.parse(feature.id);
+                    let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
+                    let stdcolor = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
+                    let dstcolor = offsets.daylight ? `hsl(${offsets.daylight.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)` : stdcolor;
+                    map.setFeatureState(
+                        { source: 'geojson', id: feature.id },
+                        {
+                            stdcolor,
+                            dstcolor,
+                            stdtz: tz.withOffset(offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard),
+                            dsttz: offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) : null,
+                            stdoffset: offsets.standard.seconds,
+                            dstoffset: offsets.daylight?.seconds
+                        }
+                    );
                 }
-                map.setPaintProperty('fill', 'fill-color', ['get', ['get', 'tzid', ['properties']], ['literal', dst ? dstcolors : stdcolors]]);
             });
 
             map.addLayer(
@@ -116,8 +118,8 @@
                     'type': 'fill',
                     'source': 'geojson',
                     'paint': {
-                        'fill-color': 'blue',
-                        // Urumqi is entirely in Shangai, don't need to fill
+                        'fill-color': ['coalesce', ['feature-state', 'stdcolor'], ['rgba', 0, 0, 0, 0]],
+                        // Urumqi is entirely in Shanghai, don't want to overlay
                         'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, .6],
                     }
                 },
@@ -169,24 +171,31 @@
         map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false }), 'bottom-left');
         map.addControl(new maplibregl.GlobeControl(), 'bottom-left');
 
+        provider.enableLocaleFallbackWith(new icu.LocaleFallbacker());
+        let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, locale);
+        let shortGeneric = icu.TimeZoneFormatter.createGenericShortWithProvider(provider, locale);
+        let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, locale);
+        let shortSpecific = icu.TimeZoneFormatter.createSpecificShortWithProvider(provider, locale);
+        let location = icu.TimeZoneFormatter.createLocationWithProvider(provider, locale);
+        let exemplar = icu.TimeZoneFormatter.createExemplarCityWithProvider(provider, locale);
+        let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLongWithProvider(provider, locale);
+        let shortOffset = icu.TimeZoneFormatter.createLocalizedOffsetShortWithProvider(provider, locale);
+
         class TzInfoControl {
             onAdd(map) {
-                this._map = map;
-                this._container = document.createElement('div');
-                this._container.className = 'info maplibregl-ctrl maplibregl-ctrl-group';
-                this.reset();
                 map.on("mouseenter", 'fill', this.handleEvent.bind(this));
                 map.on("click", 'fill', this.handleEvent.bind(this));
                 map.on("mousemove", 'fill', this.handleEvent.bind(this));
                 map.on("mouseleave", 'fill', this.reset.bind(this));
+                this._container = document.createElement('div');
+                this._container.className = 'info maplibregl-ctrl maplibregl-ctrl-group';
+                this.reset();
                 return this._container;
             }
 
             handleEvent(e) {
-                let tz = iana.parse(e.features[0].properties.tzid);
-                let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
-                let s = tz.withOffset(offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard);
-                let d = offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) : null;
+                let { stdtz, dsttz, stdoffset, dstoffset } = e.features[0].state;
+                let [s, d] = [stdtz, dsttz];
 
                 let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
 
@@ -208,13 +217,13 @@
                     lines.push(longSpecific.format(s));
                 }
 
-                var diff = offsets.standard.seconds - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                var diff = stdoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                 if (diff < -12 * 3600) {
                     diff += 24 * 3600;
                 } else if (diff > 12 * 3600) {
                     diff -= 24 * 3600;
                 }
-                lines.push(`${longOffset.format(s)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                lines.push(`${longOffset.format(s)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
 
                 if (d) {
                     if (shortSpecific.format(d) != shortOffset.format(d)) {
@@ -222,13 +231,13 @@
                     } else {
                         lines.push(longSpecific.format(d));
                     }
-                    diff = offsets.daylight.seconds - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                    diff = dstoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                     if (diff < -12 * 3600) {
                         diff += 24 * 3600;
                     } else if (diff > 12 * 3600) {
                         diff -= 24 * 3600;
                     }
-                    lines.push(`${longOffset.format(d)} (☀️ ${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                    lines.push(`${longOffset.format(d)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
                 }
 
                 if (d && dst) {
@@ -257,7 +266,6 @@
 
             onRemove() {
                 this._container.parentNode.removeChild(this._container);
-                this._map = undefined;
             }
         }
         map.addControl(new TzInfoControl(), 'top-right');
