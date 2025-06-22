@@ -33,6 +33,8 @@ jobs:
           wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/2025b/timezones.geojson.zip
           unzip timezones.geojson.zip
           rm timezones.geojson.zip
+          cargo install --git https://github.com/unicode-org/icu4x icu4x-datagen
+          icu4x-datagen --locales modern --markers TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 TimezoneMetazonePeriodsV1 TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 TimezoneVariantsOffsetsV1 DecimalSymbolsV1 DecimalDigitsV1 TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 --format blob --out tzs.blob
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
