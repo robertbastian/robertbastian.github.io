@@ -120,7 +120,7 @@
                     'paint': {
                         'fill-color': ['coalesce', ['feature-state', 'stdcolor'], ['rgba', 0, 0, 0, 0]],
                         // Urumqi is entirely in Shanghai, don't want to overlay
-                        'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, .6],
+                        'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, ['case', ['boolean', ['feature-state', 'hover'], false], .8, .6]],
                     }
                 },
                 // Find the index of the first symbol layer in the map style
