@@ -32,10 +32,11 @@
         // Replaced during deployment
         const tzdbTag = '<tzdb version>';
         const cldrTag = '<cldr version>';
+        const params = new URLSearchParams(window.location.search);
 
         let locale;
         try {
-            locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl'));
+            locale = icu.Locale.fromString(params.get('hl'));
         } catch (e) {
             locale = icu.Locale.fromString(navigator.language);
         }
@@ -81,7 +82,7 @@
 
             map.addSource('geojson', {
                 type: 'geojson',
-                data: 'combined.json',
+                data: params.get('map') || 'combined.json',
                 promoteId: 'tzid'
             });
 
