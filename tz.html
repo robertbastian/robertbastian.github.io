@@ -32,24 +32,25 @@
         // Replaced during deployment
         const tzdbTag = '<tzdb version>';
         const cldrTag = '<cldr version>';
-        const params = new URLSearchParams(window.location.search);
 
         let locale;
         try {
-            locale = icu.Locale.fromString(params.get('hl'));
+            locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl'));
         } catch (e) {
             locale = icu.Locale.fromString(navigator.language);
         }
 
         let provider = icu.DataProvider.fromByteSlice(new Uint8Array(await fetch('tzs.blob').then(response => response.arrayBuffer())));
 
+        let isLtr = !icu.LocaleDirectionality.createCommonWithProvider(provider).isRightToLeft(locale);
+        document.documentElement.setAttribute('lang', locale.toString());
+
         var map = new maplibregl.Map({
             container: 'map',
             style: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`,
             center: [0, 20],
             hash: true,
-            attributionControl: { compact: true, customAttribution: `CLDR ${cldrTag} (${locale}), TZDB ${tzdbTag}` },
-            locale: locale.toString(),
+            attributionControl: false,
             pixelRatio: 2 * devicePixelRatio,
             zoom: 3
         });
@@ -57,7 +58,7 @@
         var dst = false;
         map.on('click', (e) => {
             dst = !dst;
-            map.setPaintProperty('fill', 'fill-color', ['coalesce', ['feature-state', dst ? 'dstcolor' : 'stdcolor'], ['rgba', 0, 0, 0, 0]]);
+            map.setPaintProperty('fill-all', 'fill-color', ['coalesce', ['feature-state', dst ? 'dstcolor' : 'stdcolor'], ['rgba', 0, 0, 0, 0]]);
         });
 
 
@@ -80,9 +81,15 @@
                 }
             });
 
-            map.addSource('geojson', {
+            map.addSource('all', {
                 type: 'geojson',
-                data: params.get('map') || 'combined.json',
+                data: 'combined.json',
+                promoteId: 'tzid'
+            });
+
+            map.addSource('now', {
+                type: 'geojson',
+                data: 'combined-with-oceans-now.json',
                 promoteId: 'tzid'
             });
 
@@ -91,8 +98,8 @@
             let iana = icu.IanaParser.createWithProvider(provider);
             let offsetsCalc = icu.VariantOffsetsCalculator.createWithProvider(provider);
             map.on('sourcedata', () => {
-                for (let feature of map.querySourceFeatures('geojson')) {
-                    if (map.getFeatureState({ source: 'geojson', id: feature.id }).stdcolor) {
+                for (let feature of map.querySourceFeatures('all')) {
+                    if (map.getFeatureState({ source: 'all', id: feature.id }).stdcolor) {
                         continue;
                     }
                     let tz = iana.parse(feature.id);
@@ -100,7 +107,7 @@
                     let stdcolor = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
                     let dstcolor = offsets.daylight ? `hsl(${offsets.daylight.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)` : stdcolor;
                     map.setFeatureState(
-                        { source: 'geojson', id: feature.id },
+                        { source: 'all', id: feature.id },
                         {
                             stdcolor,
                             dstcolor,
@@ -113,66 +120,128 @@
                 }
             });
 
+            // Find the index of the first symbol layer in the map style
+            let above = map.getStyle().layers.find((l) => l.id != 'waterway_label' && l.type === 'symbol').id;
+
             map.addLayer(
                 {
-                    'id': 'fill',
+                    'id': 'fill-all',
                     'type': 'fill',
-                    'source': 'geojson',
+                    'source': 'all',
                     'paint': {
                         'fill-color': ['coalesce', ['feature-state', 'stdcolor'], ['rgba', 0, 0, 0, 0]],
                         // Urumqi is entirely in Shanghai, don't want to overlay
-                        'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, ['case', ['boolean', ['feature-state', 'hover'], false], .8, .6]],
+                        'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, ['case', ['boolean', ['feature-state', 'hover'], false], .5, .4]],
                     }
                 },
-                // Find the index of the first symbol layer in the map style
-                map.getStyle().layers.find((l) => l.id != 'waterway_label' && l.type === 'symbol').id
+                above
+                
             );
             map.addLayer(
                 {
-                    'id': 'outline',
-                    'type': 'line',
-                    'source': 'geojson',
+                    'id': 'fill-now',
+                    'type': 'fill',
+                    'source': 'now',
                     'paint': {
-                        'line-color': '#fff',
-                        'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2, 1]
+                        'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0)'],
                     }
                 },
-                // Find the index of the first symbol layer in the map style
-                map.getStyle().layers.find((l) => l.id != 'waterway_label' && l.type === 'symbol').id
+                above
+            );
+            map.addLayer(
+                {
+                    'id': 'outline-all',
+                    'type': 'line',
+                    'source': 'all',
+                    'paint': {
+                        'line-color': '#fff',
+                        'line-width': .3,
+                    }
+                },
+                above
+            );
+            map.addLayer(
+                {
+                    'id': 'outline-now',
+                    'type': 'line',
+                    'source': 'now',
+                    'paint': {
+                        'line-color': '#fff',
+                        'line-width': 2,
+                    }
+                },
+                above
             );
         });
 
-        let hoveredStateId = null;
-        map.on('mousemove', 'fill', (e) => {
-            if (e.features[0]?.id) {
-                if (hoveredStateId) {
-                    map.setFeatureState(
-                        { source: 'geojson', id: hoveredStateId },
-                        { hover: false }
-                    );
-                }
-                hoveredStateId = e.features[0].id;
+        let allHover = [];
+        map.on('mousemove', 'fill-all', (e) => {
+            let newStates = e.features.map((f) => f.id);
+            if (newStates == allHover) {
+                return;
+            }
+
+            for (let id of allHover) {
                 map.setFeatureState(
-                    { source: 'geojson', id: hoveredStateId },
+                    { source: 'all', id },
+                    { hover: false }
+                );
+            }
+            allHover = newStates;
+            for (let id of allHover) {
+                map.setFeatureState(
+                    { source: 'all', id },
                     { hover: true }
                 );
             }
         });
-        map.on('mouseleave', 'fill', () => {
-            if (hoveredStateId) {
+        map.on('mouseleave', 'fill-all', () => {
+            for (let id of allHover) {
                 map.setFeatureState(
-                    { source: 'geojson', id: hoveredStateId },
+                    { source: 'all', id },
                     { hover: false }
                 );
             }
-            hoveredStateId = null;
+            allHover = [];
         });
 
-        map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
-        map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false }), 'bottom-left');
-        map.addControl(new maplibregl.GlobeControl(), 'bottom-left');
+        let nowHover = [];
+        map.on('mousemove', 'fill-now', (e) => {
+            let newStates = e.features.map((f) => f.id);
+            if (newStates == nowHover) {
+                return;
+            }
 
-        provider.enableLocaleFallbackWith(new icu.LocaleFallbacker());
+            for (let id of nowHover) {
+                map.setFeatureState(
+                    { source: 'now', id },
+                    { hover: false }
+                );
+            }
+            nowHover = newStates;
+            for (let id of nowHover) {
+                map.setFeatureState(
+                    { source: 'now', id },
+                    { hover: true }
+                );
+            }
+        });
+        map.on('mouseleave', 'fill-now', () => {
+            for (let id of nowHover) {
+                map.setFeatureState(
+                    { source: 'now', id },
+                    { hover: false }
+                );
+            }
+            nowHover = [];
+        });
+
+        map.addControl(new maplibregl.FullscreenControl(), isLtr ? 'bottom-left' : 'bottom-right');
+        map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false }), isLtr ? 'bottom-left' : 'bottom-right');
+        map.addControl(new maplibregl.GlobeControl(), isLtr ? 'bottom-left' : 'bottom-right');
+        map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: `CLDR ${cldrTag} (${locale}), TZDB ${tzdbTag}` }), isLtr ? 'bottom-right' : 'bottom-left');
+
+        provider.enableLocaleFallbackWith(icu.LocaleFallbacker.createWithProvider(provider));
         let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, locale);
         let shortGeneric = icu.TimeZoneFormatter.createGenericShortWithProvider(provider, locale);
         let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, locale);
@@ -184,92 +253,96 @@
 
         class TzInfoControl {
             onAdd(map) {
-                map.on("mouseenter", 'fill', this.handleEvent.bind(this));
-                map.on("click", 'fill', this.handleEvent.bind(this));
-                map.on("mousemove", 'fill', this.handleEvent.bind(this));
-                map.on("mouseleave", 'fill', this.reset.bind(this));
+                map.on("mouseenter", 'fill-all', this.handleEvent.bind(this));
+                map.on("click", 'fill-all', this.handleEvent.bind(this));
+                map.on("mousemove", 'fill-all', this.handleEvent.bind(this));
+                map.on("mouseleave", 'fill-all', this.reset.bind(this));
                 this._container = document.createElement('div');
-                this._container.className = 'info maplibregl-ctrl maplibregl-ctrl-group';
                 this.reset();
                 return this._container;
             }
 
             handleEvent(e) {
-                let { stdtz, dsttz, stdoffset, dstoffset } = e.features[0].state;
-                let [s, d] = [stdtz, dsttz];
+                this._container.innerHTML = '';
+                for (let feature of e.features) {
+                    let { stdtz, dsttz, stdoffset, dstoffset } = feature.state;
+                    let [s, d] = [stdtz, dsttz];
 
-                let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
+                    let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
 
-                let lines = [
-                    `<h4>${exemplar.format(s)}</h4>`
-                ];
+                    let lines = [
+                        `<h4>${exemplar.format(s)}</h4>`
+                    ];
 
-                lines.push(location.format(s));
+                    lines.push(location.format(s));
 
-                if (shortGeneric.format(s) != location.format(s)) {
-                    lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
-                } else {
-                    lines.push(longGeneric.format(s));
-                }
-
-                if (shortSpecific.format(s) != shortOffset.format(s)) {
-                    lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
-                } else {
-                    lines.push(longSpecific.format(s));
-                }
-
-                var diff = stdoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
-                if (diff < -12 * 3600) {
-                    diff += 24 * 3600;
-                } else if (diff > 12 * 3600) {
-                    diff -= 24 * 3600;
-                }
-                lines.push(`${longOffset.format(s)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
-
-                if (d) {
-                    if (shortSpecific.format(d) != shortOffset.format(d)) {
-                        lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                    if (shortGeneric.format(s) != location.format(s) && shortGeneric.format(s) != shortOffset.format(s)) {
+                        lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
                     } else {
-                        lines.push(longSpecific.format(d));
+                        lines.push(longGeneric.format(s));
                     }
-                    diff = dstoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+
+                    if (shortSpecific.format(s) != shortOffset.format(s)) {
+                        lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
+                    } else {
+                        lines.push(longSpecific.format(s));
+                    }
+
+                    var diff = stdoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                     if (diff < -12 * 3600) {
                         diff += 24 * 3600;
                     } else if (diff > 12 * 3600) {
                         diff -= 24 * 3600;
                     }
-                    lines.push(`${longOffset.format(d)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
-                }
+                    lines.push(`${longOffset.format(s)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
 
-                if (d && dst) {
-                    [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
-                    [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
-                }
+                    if (d) {
+                        if (shortSpecific.format(d) != shortOffset.format(d)) {
+                            lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                        } else {
+                            lines.push(longSpecific.format(d));
+                        }
+                        diff = dstoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                        if (diff < -12 * 3600) {
+                            diff += 24 * 3600;
+                        } else if (diff > 12 * 3600) {
+                            diff -= 24 * 3600;
+                        }
+                        lines.push(`${longOffset.format(d)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                    }
 
-                if (d) {
-                    lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
-                    lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
-                }
+                    if (d && dst) {
+                        [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
+                        [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
+                    }
 
-                this._container.innerHTML = lines.join('<br>').replace('<br>', '');
+                    if (d) {
+                        lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
+                        lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
+                    }
+
+                    this._container.innerHTML += '<div class="info maplibregl-ctrl maplibregl-ctrl-group" dir="auto">' + lines.join('<br>').replace('<br>', '') + '</div>';
+                }
             }
 
             reset() {
                 this._container.innerHTML = `
+                    <div class="info maplibregl-ctrl maplibregl-ctrl-group">
                     <h4>Exemplar City (VVV)</h4>
                     Generic Location (VVVV)<br>
                     Generic Non-Location (vvvv)<br>
                     Specific Non-Location (zzzz/z)<br>
                     Localized Offset (OOOO)<br>
                     <span style="color:gray">Specific Non-Location (zzzz/z)</span><br>
-                    <span style="color:gray">Localized Offset (OOOO)</span>`;
+                    <span style="color:gray">Localized Offset (OOOO)</span>
+                    </div>`;
             }
 
             onRemove() {
                 this._container.parentNode.removeChild(this._container);
             }
         }
-        map.addControl(new TzInfoControl(), 'top-right');
+        map.addControl(new TzInfoControl(), isLtr ? 'top-left' : 'top-right');
     </script>
 </head>
 

@@ -36,13 +36,24 @@ jobs:
           sed -i -e "s/<tzdb version>/$TZDB/g" tz.html
           sed -i -e "s/<cldr version>/$CLDR/g" tz.html
           wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones.geojson.zip
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones-1970.geojson.zip
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones-now.geojson.zip
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones-with-oceans.geojson.zip
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones-with-oceans-1970.geojson.zip
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones-with-oceans-now.geojson.zip
           unzip '*.zip'
           rm *.zip
+
+          git clone https://github.com/robertbastian/timezone-boundary-builder
+          cd timezone-boundary-builder
+          git checkout oceans
+          npm install
+          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/input-data.zip
+          unzip input-data.zip
+          rm input-data.zip
+          mv input-data/* .
+          rm -fr cache/{zone-config,derived}* 
+          mkdir -p working/input-data
+          node --max-old-space-size=8192 index.js --skip_analyze_osm_tz_diffs --skip_analyze_diffs --skip_zip --skip_1970_zones --skip_shapefile
+          mv working/combined-with-oceans-now.json ..
+          cd ..
+          rm -rf timezone-boundary-builder
+
           cargo install --git https://github.com/unicode-org/icu4x icu4x-datagen
           icu4x-datagen --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
@@ -51,7 +62,7 @@ jobs:
               DecimalSymbolsV1 DecimalDigitsV1 \
             TimezoneVariantsOffsetsV1 \
             TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 \
-            LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 
+            LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
