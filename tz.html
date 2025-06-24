@@ -166,8 +166,9 @@
                     'type': 'line',
                     'source': 'now',
                     'paint': {
-                        'line-color': '#fff',
-                        'line-width': 2,
+                        'line-color': ['case', ['boolean', ['feature-state', 'hover'], false], 'gray', 'white'],
+                        'line-width': 1,
+                        'line-offset': .5
                     }
                 },
                 above
