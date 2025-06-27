@@ -54,7 +54,7 @@ jobs:
           cd ..
           rm -rf timezone-boundary-builder
 
-          cargo install --git https://github.com/unicode-org/icu4x icu4x-datagen
+          cargo install --git https://github.com/robertbastian/icu4x --branch morocco icu4x-datagen
           icu4x-datagen --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
               TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
