@@ -118,6 +118,17 @@
                         }
                     );
                 }
+                for (let feature of map.querySourceFeatures('now')) {
+                    if (map.getFeatureState({ source: 'now', id: feature.id }).oceanOffset) {
+                        continue;
+                    }
+                    let tz = iana.parse(feature.id);
+                    let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
+                    map.setFeatureState(
+                        { source: 'now', id: feature.id },
+                        { oceanOffset: offsets.standard }
+                    );
+                }
             });
 
             // Find the index of the first symbol layer in the map style
@@ -135,7 +146,6 @@
                     }
                 },
                 above
-                
             );
             map.addLayer(
                 {
@@ -258,71 +268,84 @@
                 map.on("click", 'fill-all', this.handleEvent.bind(this));
                 map.on("mousemove", 'fill-all', this.handleEvent.bind(this));
                 map.on("mouseleave", 'fill-all', this.reset.bind(this));
+                map.on("mouseenter", 'fill-now', this.handleEvent.bind(this));
+                map.on("mousemove", 'fill-now', this.handleEvent.bind(this));
+                map.on("mouseleave", 'fill-now', this.reset.bind(this));
                 this._container = document.createElement('div');
                 this.reset();
                 return this._container;
             }
 
             handleEvent(e) {
-                this._container.innerHTML = '';
-                for (let feature of e.features) {
-                    let { stdtz, dsttz, stdoffset, dstoffset } = feature.state;
-                    let [s, d] = [stdtz, dsttz];
+                if (e.features.length == 0) {
+                    this.reset();
+                    return;
+                }
 
-                    let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
+                if (e.features[0].layer.id == 'fill-all') {
+                    this._container.innerHTML = '';
+                    for (let feature of e.features) {
+                        let { stdtz, dsttz, stdoffset, dstoffset } = feature.state;
+                        let [s, d] = [stdtz, dsttz];
 
-                    let lines = [
-                        `<h4>${exemplar.format(s)}</h4>`
-                    ];
+                        let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
 
-                    lines.push(location.format(s));
+                        let lines = [
+                            `<h4>${exemplar.format(s)}</h4>`
+                        ];
 
-                    if (shortGeneric.format(s) != location.format(s) && shortGeneric.format(s) != shortOffset.format(s)) {
-                        lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
-                    } else {
-                        lines.push(longGeneric.format(s));
-                    }
+                        lines.push(location.format(s));
 
-                    if (shortSpecific.format(s) != shortOffset.format(s)) {
-                        lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
-                    } else {
-                        lines.push(longSpecific.format(s));
-                    }
-
-                    var diff = stdoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
-                    if (diff < -12 * 3600) {
-                        diff += 24 * 3600;
-                    } else if (diff > 12 * 3600) {
-                        diff -= 24 * 3600;
-                    }
-                    lines.push(`${longOffset.format(s)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
-
-                    if (d) {
-                        if (shortSpecific.format(d) != shortOffset.format(d)) {
-                            lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                        if (shortGeneric.format(s) != location.format(s) && shortGeneric.format(s) != shortOffset.format(s)) {
+                            lines.push(`${longGeneric.format(s)} (${shortGeneric.format(s)})`);
                         } else {
-                            lines.push(longSpecific.format(d));
+                            lines.push(longGeneric.format(s));
                         }
-                        diff = dstoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+
+                        if (shortSpecific.format(s) != shortOffset.format(s)) {
+                            lines.push(`${longSpecific.format(s)} (${shortSpecific.format(s)})`);
+                        } else {
+                            lines.push(longSpecific.format(s));
+                        }
+
+                        var diff = stdoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                         if (diff < -12 * 3600) {
                             diff += 24 * 3600;
                         } else if (diff > 12 * 3600) {
                             diff -= 24 * 3600;
                         }
-                        lines.push(`${longOffset.format(d)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
-                    }
+                        lines.push(`${longOffset.format(s)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
 
-                    if (d && dst) {
-                        [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
-                        [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
-                    }
+                        if (d) {
+                            if (shortSpecific.format(d) != shortOffset.format(d)) {
+                                lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                            } else {
+                                lines.push(longSpecific.format(d));
+                            }
+                            diff = dstoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                            if (diff < -12 * 3600) {
+                                diff += 24 * 3600;
+                            } else if (diff > 12 * 3600) {
+                                diff -= 24 * 3600;
+                            }
+                            lines.push(`${longOffset.format(d)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                        }
 
-                    if (d) {
-                        lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
-                        lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
-                    }
+                        if (d && dst) {
+                            [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
+                            [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
+                        }
 
-                    this._container.innerHTML += '<div class="info maplibregl-ctrl maplibregl-ctrl-group" dir="auto">' + lines.join('<br>').replace('<br>', '') + '</div>';
+                        if (d) {
+                            lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
+                            lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
+                        }
+
+                        this._container.innerHTML += '<div class="info maplibregl-ctrl maplibregl-ctrl-group" dir="auto">' + lines.join('<br>').replace('<br>', '') + '</div>';
+                    }
+                } else if (!this._container.innerHTML.includes('☀️')) {
+                    let offset = longOffset.format(icu.TimeZone.unknown().withOffset(e.features[0].state.oceanOffset));
+                    this._container.innerHTML = '<div class="info maplibregl-ctrl maplibregl-ctrl-group" dir="auto">' + offset + '</div>';
                 }
             }
 
