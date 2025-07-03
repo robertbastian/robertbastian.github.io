@@ -54,8 +54,9 @@ jobs:
           cd ..
           rm -rf timezone-boundary-builder
 
-          cargo install --git https://github.com/robertbastian/icu4x --branch morocco icu4x-datagen
-          icu4x-datagen --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
+          git clone -b morocco https://github.com/robertbastian/icu4x
+          cargo run --release --manifest-path icu4x/provider/icu4x-datagen/Cargo.toml -- \
+            --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
               TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
               TimezoneMetazonePeriodsV1 TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
@@ -63,6 +64,14 @@ jobs:
             TimezoneVariantsOffsetsV1 \
             TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 \
             LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
+          cd icu4x/ffi/npm
+          npm pack
+          cd ../../..
+          mv icu4x/ffi/npm/icu-2* .
+          rm -rf icu4x
+          tar -xzvf icu-2*
+          rm icu-2*
+          mv package icu
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
