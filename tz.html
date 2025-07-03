@@ -55,10 +55,10 @@
             zoom: 3
         });
 
-        var dst = false;
+        var alternate = false;
         map.on('click', (e) => {
-            dst = !dst;
-            map.setPaintProperty('fill-all', 'fill-color', ['coalesce', ['feature-state', dst ? 'dstcolor' : 'stdcolor'], ['rgba', 0, 0, 0, 0]]);
+            alternate = !alternate;
+            map.setPaintProperty('fill-all', 'fill-color', ['coalesce', ['feature-state', alternate ? 'altColor' : 'stdColor'], ['rgba', 0, 0, 0, 0]]);
         });
 
 
@@ -104,17 +104,19 @@
                     }
                     let tz = iana.parse(feature.id);
                     let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
-                    let stdcolor = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
-                    let dstcolor = offsets.daylight ? `hsl(${offsets.daylight.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)` : stdcolor;
+                    let stdColor = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
+                    let altColor = offsets.daylight || offsets.sundown ? `hsl(${(offsets.daylight || offsets.sundown).seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)` : stdColor;
                     map.setFeatureState(
                         { source: 'all', id: feature.id },
                         {
-                            stdcolor,
-                            dstcolor,
-                            stdtz: tz.withOffset(offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard),
-                            dsttz: offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) : null,
-                            stdoffset: offsets.standard.seconds,
-                            dstoffset: offsets.daylight?.seconds
+                            stdColor,
+                            altColor,
+                            stdTz: tz.withOffset(offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard),
+                            altTz: offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) : 
+                                    offsets.sundown ? tz.withOffset(offsets.sundown).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Sundown) : 
+                                    null,
+                            stdOffset: offsets.standard.seconds,
+                            altOffset: (offsets.daylight || offsets.sundown)?.seconds
                         }
                     );
                 }
@@ -140,7 +142,7 @@
                     'type': 'fill',
                     'source': 'all',
                     'paint': {
-                        'fill-color': ['coalesce', ['feature-state', 'stdcolor'], ['rgba', 0, 0, 0, 0]],
+                        'fill-color': ['coalesce', ['feature-state', 'stdColor'], ['rgba', 0, 0, 0, 0]],
                         // Urumqi is entirely in Shanghai, don't want to overlay
                         'fill-opacity': ['case', ['==', ['literal', 'Asia/Urumqi'], ['get', 'tzid']], 0, ['case', ['boolean', ['feature-state', 'hover'], false], .5, .4]],
                     }
@@ -285,8 +287,8 @@
                 if (e.features[0].layer.id == 'fill-all') {
                     this._container.innerHTML = '';
                     for (let feature of e.features) {
-                        let { stdtz, dsttz, stdoffset, dstoffset } = feature.state;
-                        let [s, d] = [stdtz, dsttz];
+                        let { stdTz, altTz, stdOffset, altOffset } = feature.state;
+                        let [s, a] = [stdTz, altTz];
 
                         let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
 
@@ -308,7 +310,7 @@
                             lines.push(longSpecific.format(s));
                         }
 
-                        var diff = stdoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                        var diff = stdOffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                         if (diff < -12 * 3600) {
                             diff += 24 * 3600;
                         } else if (diff > 12 * 3600) {
@@ -316,27 +318,27 @@
                         }
                         lines.push(`${longOffset.format(s)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
 
-                        if (d) {
-                            if (shortSpecific.format(d) != shortOffset.format(d)) {
-                                lines.push(`${longSpecific.format(d)} (${shortSpecific.format(d)})`);
+                        if (a) {
+                            if (shortSpecific.format(a) != shortOffset.format(a)) {
+                                lines.push(`${longSpecific.format(a)} (${shortSpecific.format(a)})`);
                             } else {
-                                lines.push(longSpecific.format(d));
+                                lines.push(longSpecific.format(a));
                             }
-                            diff = dstoffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                            diff = altOffset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                             if (diff < -12 * 3600) {
                                 diff += 24 * 3600;
                             } else if (diff > 12 * 3600) {
                                 diff -= 24 * 3600;
                             }
-                            lines.push(`${longOffset.format(d)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
+                            lines.push(`${longOffset.format(a)} (☀️${(diff < 0 ? '-' : '+')}${Math.floor(Math.abs(diff) / 3600).toString()}:${Math.floor(Math.abs(diff) % 3600 / 60).toString().padStart(2, "0")})`);
                         }
 
-                        if (d && dst) {
+                        if (a && alternate) {
                             [lines[lines.length - 1], lines[lines.length - 3]] = [lines[lines.length - 3], lines[lines.length - 1]];
                             [lines[lines.length - 2], lines[lines.length - 4]] = [lines[lines.length - 4], lines[lines.length - 2]];
                         }
 
-                        if (d) {
+                        if (a) {
                             lines[lines.length - 1] = `<span style='color:gray;'>${lines[lines.length - 1]}</span>`;
                             lines[lines.length - 2] = `<span style='color:gray;'>${lines[lines.length - 2]}</span>`;
                         }
