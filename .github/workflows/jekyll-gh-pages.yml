@@ -35,9 +35,6 @@ jobs:
         run: |
           sed -i -e "s/<tzdb version>/$TZDB/g" tz.html
           sed -i -e "s/<cldr version>/$CLDR/g" tz.html
-          wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/timezones.geojson.zip
-          unzip '*.zip'
-          rm *.zip
 
           git clone https://github.com/robertbastian/timezone-boundary-builder
           cd timezone-boundary-builder
@@ -51,6 +48,7 @@ jobs:
           mkdir -p working/input-data
           node --max-old-space-size=8192 index.js --skip_analyze_osm_tz_diffs --skip_analyze_diffs --skip_zip --skip_1970_zones --skip_shapefile
           mv working/combined-with-oceans-now.json ..
+          mv working/combined.json ..
           cd ..
           rm -rf timezone-boundary-builder
 
