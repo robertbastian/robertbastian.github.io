@@ -46,8 +46,8 @@ jobs:
           wget https://github.com/evansiroky/timezone-boundary-builder/releases/download/$TZDB/input-data.zip
           unzip input-data.zip
           rm input-data.zip
-          mv input-data/* .
-          rm -fr cache/{zone-config,derived}* 
+          mv input-data/downloads .
+          mkdir cache
           mkdir -p working/input-data
           node --max-old-space-size=8192 index.js --skip_analyze_osm_tz_diffs --skip_analyze_diffs --skip_zip --skip_1970_zones --skip_shapefile
           mv working/combined-with-oceans-now.json ..
