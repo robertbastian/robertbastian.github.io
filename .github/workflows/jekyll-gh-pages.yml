@@ -52,7 +52,7 @@ jobs:
           cd ..
           rm -rf timezone-boundary-builder
 
-          git clone -b morocco https://github.com/robertbastian/icu4x
+          git clone https://github.com/robertbastian/icu4x
           cargo run --release --manifest-path icu4x/provider/icu4x-datagen/Cargo.toml -- \
             --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
