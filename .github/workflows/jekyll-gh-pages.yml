@@ -57,9 +57,9 @@ jobs:
             --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
               TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
-              TimezoneMetazonePeriodsV1 TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
+              TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
               DecimalSymbolsV1 DecimalDigitsV1 \
-            TimezoneVariantsOffsetsV1 \
+            TimezonePeriodsV1 \
             TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 \
             LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
           cd icu4x/ffi/npm
