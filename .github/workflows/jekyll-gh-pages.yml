@@ -60,7 +60,7 @@ jobs:
               TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
               DecimalSymbolsV1 DecimalDigitsV1 \
             TimezonePeriodsV1 \
-            TimezoneIdentifiersIanaCoreV1 TimezoneVariantsOffsetsV1 \
+            TimezoneIdentifiersIanaCoreV1 \
             LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
           cd icu4x/ffi/npm
           npm pack
