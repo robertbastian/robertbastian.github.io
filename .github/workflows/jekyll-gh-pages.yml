@@ -67,7 +67,7 @@ jobs:
           npm pack
           cd ../../..
           mv icu4x/ffi/npm/icu-2* .
-          rm -rf icu4x
+          rm -rf icu4x cldr-json
           tar -xzvf icu-2*
           rm icu-2*
           mv package icu
