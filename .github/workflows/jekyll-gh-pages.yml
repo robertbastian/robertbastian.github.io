@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZDB: 2025b
-      CLDR: 48.0.0-draft
+      CLDR: 48.0.0-ALPHA2D0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,22 +52,20 @@ jobs:
           cd ..
           rm -rf timezone-boundary-builder
 
-          git clone -b 48 https://github.com/robertbastian/cldr-json
-          git clone https://github.com/robertbastian/icu4x
+          git clone -b tz48 https://github.com/robertbastian/icu4x
           cargo run --release --manifest-path icu4x/provider/icu4x-datagen/Cargo.toml -- \
-            --locales modern --tzdb-tag $TZDB --cldr-root cldr-json/cldr-json --format blob --out tzs.blob --markers \
+            --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
               TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
               TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
               DecimalSymbolsV1 DecimalDigitsV1 \
-            TimezonePeriodsV1 \
-            TimezoneIdentifiersIanaCoreV1 \
-            LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
+              TimezonePeriodsV1 TimezoneIdentifiersIanaCoreV1 \
+              LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
           cd icu4x/ffi/npm
           npm pack
           cd ../../..
           mv icu4x/ffi/npm/icu-2* .
-          rm -rf icu4x cldr-json
+          rm -rf icu4x
           tar -xzvf icu-2*
           rm icu-2*
           mv package icu

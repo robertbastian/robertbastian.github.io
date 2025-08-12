@@ -105,18 +105,17 @@
                     let tz = iana.parse(feature.id);
                     let offsets = offsetsCalc.computeOffsetsFromTimeZoneAndDateTime(tz, date, time);
                     let stdColor = `hsl(${offsets.standard.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
-                    let altColor = offsets.daylight || offsets.sundown ? `hsl(${(offsets.daylight || offsets.sundown).seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)` : stdColor;
+                    let altColor = offsets.daylight ? `hsl(${offsets.daylight.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)` : stdColor;
                     map.setFeatureState(
                         { source: 'all', id: feature.id },
                         {
                             stdColor,
                             altColor,
                             stdTz: tz.withOffset(offsets.standard).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard),
-                            altTz: offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) : 
-                                    offsets.sundown ? tz.withOffset(offsets.sundown).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Sundown) : 
-                                    null,
+                            altTz: offsets.daylight ? tz.withOffset(offsets.daylight).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Daylight) :
+                                null,
                             stdOffset: offsets.standard.seconds,
-                            altOffset: (offsets.daylight || offsets.sundown)?.seconds
+                            altOffset: offsets.daylight?.seconds
                         }
                     );
                 }
