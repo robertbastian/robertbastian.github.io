@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZDB: 2025b
-      CLDR: 48.0.0-ALPHA2D0
+      CLDR: 48.0.0-BETA1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
           cd ..
           rm -rf timezone-boundary-builder
 
-          git clone -b tz48 https://github.com/robertbastian/icu4x
+          git clone https://github.com/robertbastian/icu4x
           cargo run --release --manifest-path icu4x/provider/icu4x-datagen/Cargo.toml -- \
             --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
             TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
