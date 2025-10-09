@@ -33,17 +33,9 @@
         const tzdbTag = '<tzdb version>';
         const cldrTag = '<cldr version>';
 
-        let locale;
-        try {
-            locale = icu.Locale.fromString(new URLSearchParams(window.location.search).get('hl'));
-        } catch (e) {
-            locale = icu.Locale.fromString(navigator.language);
-        }
+        let locale = new Intl.Locale(new URLSearchParams(window.location.search).get('hl') || navigator.language);
 
-        let provider = icu.DataProvider.fromByteSlice(new Uint8Array(await fetch('tzs.blob').then(response => response.arrayBuffer())));
-
-        let isLtr = !icu.LocaleDirectionality.createCommonWithProvider(provider).isRightToLeft(locale);
-        document.documentElement.setAttribute('lang', locale.toString());
+        document.documentElement.setAttribute('lang',  locale.toString());
 
         var map = new maplibregl.Map({
             container: 'map',
@@ -55,22 +47,11 @@
             zoom: 3
         });
 
-        let labelName;
-        if (locale.compareToString('und') == 0) {
-            labelName = 'int_name'
-        } else {
-            let ostLocale = icu.Locale.fromString(locale.toString());
-            let expander = icu.LocaleExpander.createCommonWithProvider(provider);
-            expander.maximize(ostLocale);
-            ostLocale.region = '';
-            expander.minimize(ostLocale);
-            labelName = 'name:' + ostLocale;
-        }
         map.on('style.load', () => {
             map.style.setProjection({ type: 'globe' });
             map.getStyle().layers.forEach((l) => {
                 if (l.type === 'symbol') {
-                    map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', labelName], ['get', 'name']]);
+                    map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', `name:${locale.language}`], ['get', 'name']]);
                 }
             });
 
@@ -86,36 +67,34 @@
                 promoteId: 'tzid'
             });
 
-            function getCurrOffset(iana) {
-                return icu.UtcOffset.fromString(Intl.DateTimeFormat('fr', {timeZoneName: 'longOffset', timeZone: iana}).formatToParts().filter(p => p.type == 'timeZoneName')[0].value.replace('UTC','') || '+00');
+            function getCurrOffsetSeconds(iana) {
+                let string = Intl.DateTimeFormat('fr', {timeZoneName: 'longOffset', timeZone: iana}).formatToParts().filter(p => p.type == 'timeZoneName')[0].value.replace('UTC','') || '+00:00';
+                let sign = string[0] == '+' ? 1 : -1;
+                let hours = parseInt(string.substring(1, 3));
+                let minutes = parseInt(string.substring(4, 6));
+                return sign * (hours * 60 + minutes) * 60;
             }
 
-            let date = new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
-            let time = icu.Time.startOfDay();
-            let iana = icu.IanaParser.createWithProvider(provider);
             map.on('sourcedata', () => {
                 for (let feature of map.querySourceFeatures('all')) {
-                    if (map.getFeatureState({ source: 'all', id: feature.id }).stdcolor) {
+                    if (map.getFeatureState({ source: 'all', id: feature.id }).offset) {
                         continue;
                     }
-                    let offset = getCurrOffset(feature.id);
-                    let color = `hsl(${offset.seconds / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
+                    let offset = getCurrOffsetSeconds(feature.id);
+                    let color = `hsl(${offset / 12 / 60 / 60 * 180 + 180}, 80%, 40%)`;
                     map.setFeatureState(
                         { source: 'all', id: feature.id },
-                        {
-                            color,
-                            tz: iana.parse(feature.id).withOffset(offset).atDateTimeIso(date, time).withVariant(icu.TimeZoneVariant.Standard),
-                            offset: offset.seconds,
-                        }
+                        { color, offset }
                     );
                 }
                 for (let feature of map.querySourceFeatures('now')) {
-                    if (map.getFeatureState({ source: 'now', id: feature.id }).oceanOffset) {
+                    if (map.getFeatureState({ source: 'now', id: feature.id }).offset) {
                         continue;
                     }
+                    let offset = getCurrOffsetSeconds(feature.id);
                     map.setFeatureState(
                         { source: 'now', id: feature.id },
-                        { oceanOffset: getCurrOffset(feature.id) }
+                        { offset }
                     );
                 }
             });
@@ -236,17 +215,21 @@
             nowHover = [];
         });
 
-        map.addControl(new maplibregl.FullscreenControl(), isLtr ? 'bottom-left' : 'bottom-right');
-        map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false }), isLtr ? 'bottom-left' : 'bottom-right');
-        map.addControl(new maplibregl.GlobeControl(), isLtr ? 'bottom-left' : 'bottom-right');
-        map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: `CLDR ${cldrTag} (${locale}), TZDB ${tzdbTag}` }), isLtr ? 'bottom-right' : 'bottom-left');
+        map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
+        map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false }), 'bottom-left');
+        map.addControl(new maplibregl.GlobeControl(), 'bottom-left');
+        map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: `CLDR ${cldrTag} (${document.documentElement.getAttribute('lang')}), TZDB ${tzdbTag}` }), 'bottom-right');
 
+        let provider = icu.DataProvider.fromByteSlice(new Uint8Array(await fetch('tzs.blob').then(response => response.arrayBuffer())));
         provider.enableLocaleFallbackWith(icu.LocaleFallbacker.createWithProvider(provider));
-        let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, locale);
-        let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, locale);
-        let location = icu.TimeZoneFormatter.createLocationWithProvider(provider, locale);
-        let exemplar = icu.TimeZoneFormatter.createExemplarCityWithProvider(provider, locale);
-        let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLongWithProvider(provider, locale);
+
+        let icuLocale = icu.Locale.fromString(locale.toString());
+        let longGeneric = icu.TimeZoneFormatter.createGenericLongWithProvider(provider, icuLocale);
+        let longSpecific = icu.TimeZoneFormatter.createSpecificLongWithProvider(provider, icuLocale);
+        let location = icu.TimeZoneFormatter.createLocationWithProvider(provider, icuLocale);
+        let exemplar = icu.TimeZoneFormatter.createExemplarCityWithProvider(provider, icuLocale);
+        let longOffset = icu.TimeZoneFormatter.createLocalizedOffsetLongWithProvider(provider, icuLocale);
+        let ianaParser = icu.IanaParser.createWithProvider(provider);
 
         class TzInfoControl {
             onAdd(map) {
@@ -271,7 +254,12 @@
                 if (e.features[0].layer.id == 'fill-all') {
                     this._container.innerHTML = '';
                     for (let feature of e.features) {
-                        let { tz, offset } = feature.state;
+                        let tz = ianaParser.parse(feature.id)
+                            .withOffset(icu.UtcOffset.fromSeconds(feature.state.offset))
+                            .atDateTimeIso(
+                                new icu.IsoDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()),
+                                icu.Time.startOfDay()
+                            );
 
                         let offsetToString = (o) => (o.isNonNegative ? "+" : "-") + Math.abs(o.hoursPart).toString().padStart(2, "0") + ":" + o.minutesPart.toString().padStart(2, "0")
 
@@ -281,7 +269,7 @@
                         lines.push(location.format(tz));
                         lines.push(exemplar.format(tz))
 
-                        var diff = offset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
+                        var diff = feature.state.offset - Math.floor(e.lngLat.lng * 12.0 * 60 / 180) * 60; // rounded to minutes
                         if (diff < -12 * 3600) {
                             diff += 24 * 3600;
                         } else if (diff > 12 * 3600) {
@@ -293,7 +281,8 @@
                         this._container.innerHTML += '<div class="info maplibregl-ctrl maplibregl-ctrl-group" dir="auto">' + lines.join('<br>').replace('<br>', '') + '</div>';
                     }
                 } else if (!this._container.innerHTML.includes('☀️')) {
-                    let offset = longOffset.format(icu.TimeZone.unknown().withOffset(e.features[0].state.oceanOffset));
+                    let feature = e.features[0];
+                    let offset = longOffset.format(ianaParser.parse(feature.id).withOffset(icu.UtcOffset.fromSeconds(feature.state.offset)));
                     this._container.innerHTML = '<div class="info maplibregl-ctrl maplibregl-ctrl-group" dir="auto">' + offset + '</div>';
                 }
             }
@@ -313,7 +302,7 @@
                 this._container.parentNode.removeChild(this._container);
             }
         }
-        map.addControl(new TzInfoControl(), isLtr ? 'top-left' : 'top-right');
+        map.addControl(new TzInfoControl(), 'top-left');
     </script>
 </head>
 

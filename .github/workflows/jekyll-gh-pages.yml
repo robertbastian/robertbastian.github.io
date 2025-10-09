@@ -27,15 +27,29 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZDB: 2025b
-      CLDR: 48.0.0-BETA1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build data
         run: |
-          sed -i -e "s/<tzdb version>/$TZDB/g" tz.html
+          git clone --depth=1 https://github.com/unicode-org/icu4x
+          pushd icu4x/ffi/npm; FEATURES=locale,datetime,buffer_provider npm pack; popd
+          tar -xzvf icu4x/ffi/npm/icu-2* -C .
+          mv package icu
+          cargo run --release --manifest-path icu4x/provider/icu4x-datagen/Cargo.toml -- \
+            --locales modern --format blob --out tzs.blob --markers \
+            TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
+              TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
+              TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
+              DecimalSymbolsV1 DecimalDigitsV1 \
+              TimezonePeriodsV1 TimezoneIdentifiersIanaCoreV1 \
+              LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
+          export CLDR=$(cargo metadata --manifest-path icu4x/Cargo.toml --format-version 1 | \
+            jq -rc '.packages[] | select(.name == "icu_locale_data") | .metadata.sources.cldr.tagged')
           sed -i -e "s/<cldr version>/$CLDR/g" tz.html
+          rm -rf icu4x
 
+          sed -i -e "s/<tzdb version>/$TZDB/g" tz.html
           git clone https://github.com/robertbastian/timezone-boundary-builder
           cd timezone-boundary-builder
           git checkout oceans
@@ -51,24 +65,6 @@ jobs:
           mv working/combined.json ..
           cd ..
           rm -rf timezone-boundary-builder
-
-          git clone https://github.com/robertbastian/icu4x
-          cargo run --release --manifest-path icu4x/provider/icu4x-datagen/Cargo.toml -- \
-            --locales modern --tzdb-tag $TZDB --cldr-tag $CLDR --format blob --out tzs.blob --markers \
-            TimezoneNamesLocationsOverrideV1 TimezoneNamesLocationsRootV1 TimezoneNamesCitiesOverrideV1 TimezoneNamesCitiesRootV1 \
-              TimezoneNamesGenericLongV1 TimezoneNamesStandardLongV1 TimezoneNamesGenericShortV1 \
-              TimezoneNamesSpecificLongV1 TimezoneNamesSpecificShortV1 TimezoneNamesEssentialsV1 \
-              DecimalSymbolsV1 DecimalDigitsV1 \
-              TimezonePeriodsV1 TimezoneIdentifiersIanaCoreV1 \
-              LocaleLikelySubtagsLanguageV1 LocaleLikelySubtagsScriptRegionV1 LocaleParentsV1 LocaleScriptDirectionV1
-          cd icu4x/ffi/npm
-          npm pack
-          cd ../../..
-          mv icu4x/ffi/npm/icu-2* .
-          rm -rf icu4x
-          tar -xzvf icu-2*
-          rm icu-2*
-          mv package icu
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
