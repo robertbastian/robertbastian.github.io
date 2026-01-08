@@ -26,13 +26,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      TZDB: 2025b
+      TZDB: 2025c
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build data
         run: |
-          git clone --depth=1 https://github.com/unicode-org/icu4x
+          git clone https://github.com/robertbastian/icu4x
+          pushd icu4x; git checkout fixnpm; popd;
           pushd icu4x/ffi/npm; FEATURES=locale,datetime,buffer_provider npm pack; popd
           tar -xzvf icu4x/ffi/npm/icu-2* -C .
           mv package icu
