@@ -26,7 +26,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      TZDB: 2026b
+      TZDB: 2026c
     steps:
       - name: Checkout
         uses: actions/checkout@v4
