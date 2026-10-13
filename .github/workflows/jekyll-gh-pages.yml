@@ -30,6 +30,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Node.js (Forcing Official Dist)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          # Disabling default cache lookup forces downloading 
+          # the fully-compiled distribution from nodejs.org
+          check-latest: true 
       - name: Build data
         run: |
           git clone https://github.com/robertbastian/icu4x
